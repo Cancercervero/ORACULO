@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WIN System - Mirror World 3D</title>
+  <script src="https://unpkg.com/globe.gl"></script>
+  <style>
+    body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+    #world { width: 100vw; height: 100vh; }
+    #overlay { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+    .status-panel { background: rgba(0, 20, 0, 0.8); border: 1px solid #0f0; padding: 15px; margin-bottom: 10px; width: 300px; }
+    h1 { margin: 0 0 10px 0; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
+    .alert { color: #f00; animation: blink 1s infinite; }
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+    .agent-list { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="overlay">
+    <div class="status-panel">
+      <h1>Wayne Intelligence Network</h1>
+      <div class="agent-list">
+        <div>STATUS: <span style="color: #0f0;">ACTIVE</span></div>
+        <div>SCANNING: GLOBAL SECTORS...</div>
+        <div class="alert">!!! ALERT: SAHEL CONVERGENCE !!!</div>
+        <div>ACTIVE AGENTS: 112 DETECTED</div>
+      </div>
+    </div>
+    <div class="status-panel">
+      <h1>Tactical Feed</h1>
+      <div id="feed" style="font-size: 10px;">
+        > Detecting Dark Pool movement in USO...<br>
+        > Macron shifting naval assets to West Africa...<br>
+        > Mojtaba Khamenei speech detected...<br>
+        > Shadowbroker: GPS Jamming in Red Sea...
+      </div>
+    </div>
+  </div>
+  <div id="world"></div>
+
+  <script>
+    const world = Globe()
+      (document.getElementById('world'))
+      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+      .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+      .htmlElementsData([
+        { lat: 12.3, lng: -1.5, name: 'Traoré (Sahel)', color: 'red' },
+        { lat: 48.8, lng: 2.3, name: 'Macron (France)', color: 'blue' },
+        { lat: 35.7, lng: 51.4, name: 'Mojtaba Khamenei (Iran)', color: 'green' },
+        { lat: 38.9, lng: -77.0, name: 'Trump (USA)', color: 'white' }
+      ])
+      .htmlElement(d => {
+        const el = document.createElement('div');
+        el.innerHTML = `
+          <div style="color: ${d.color}; font-size: 10px; font-family: monospace; background: rgba(0,0,0,0.5); padding: 2px; border: 1px solid ${d.color};">
+            [${d.name}]
+          </div>
+        `;
+        return el;
+      });
+
+    // Add some random arcs to represent "Money/Resource Flows"
+    const arcsData = [
+      { startLat: 12.3, startLng: -1.5, endLat: 48.8, endLng: 2.3, color: 'red', label: 'Uranium Conflict' },
+      { startLat: 35.7, startLng: 51.4, endLat: 38.9, endLng: -77.0, color: 'green', label: 'Petro-Shadows' }
+    ];
+    
+    world.arcsData(arcsData)
+      .arcColor('color')
+      .arcDashLength(0.4)
+      .arcDashGap(0.2)
+      .arcDashAnimateTime(1500);
+
+  </script>
+</body>
+</html>

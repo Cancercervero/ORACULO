@@ -1,0 +1,15 @@
+{
+  "name": "Xi Jinping",
+  "role": "President of China",
+  "country": "China",
+  "background": {
+    "experience": "Centralized control, Belt and Road Initiative",
+    "traits": [
+      "Rejuvenation",
+      "Self-reliance"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

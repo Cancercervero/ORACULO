@@ -1,0 +1,15 @@
+{
+  "name": "Volodymyr Zelenskyy",
+  "role": "President of Ukraine",
+  "country": "Ukraine",
+  "background": {
+    "experience": "Leading Ukraine through the 2026 phase of the conflict",
+    "traits": [
+      "Survival",
+      "Reconstruction"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

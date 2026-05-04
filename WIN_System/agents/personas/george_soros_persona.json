@@ -1,0 +1,15 @@
+{
+  "name": "George Soros",
+  "role": "Chairman of Soros Fund Mgmt",
+  "country": "USA/Hungary",
+  "background": {
+    "experience": "Legendary currency trader",
+    "traits": [
+      "Reflexivity",
+      "Open Society"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

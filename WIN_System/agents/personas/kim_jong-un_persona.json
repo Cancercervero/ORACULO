@@ -1,0 +1,15 @@
+{
+  "name": "Kim Jong-un",
+  "role": "Supreme Leader of North Korea",
+  "country": "North Korea",
+  "background": {
+    "experience": "Survival through nuclear leverage",
+    "traits": [
+      "Nuclear Deterrent",
+      "Isolation"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

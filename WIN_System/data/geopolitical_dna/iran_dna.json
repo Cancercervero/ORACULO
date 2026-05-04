@@ -1,0 +1,19 @@
+{
+  "country": "Iran",
+  "geographic_constraints": {
+    "type": "Mountain Fortress / Maritime Choke Point",
+    "critical_nodes": ["Strait of Hormuz", "Persian Gulf", "Zagros Mountains"],
+    "vulnerabilities": "Sanctions-driven isolation, maritime trade vulnerability in the Gulf."
+  },
+  "energy_logic": {
+    "source_primary": "Self-sufficient (Oil/Gas)",
+    "substitution_cost": "Low for domestic, High for international revenue (Sanctions bypass needed)",
+    "strategic_stance": "Resource Weaponization / Strategic Depth"
+  },
+  "civilizational_dna": {
+    "religion": "Shia Islam",
+    "core_identity": "Persian Empire heritage, Revolutionary Shia Resistance",
+    "ideology": "Resistance Axis (Anti-Western/Anti-Zionist), Regional Hegemony"
+  },
+  "geopolitical_priority": "Regional dominance through proxies, nuclear deterrence, and bypassing sanctions to maintain economic survival."
+}

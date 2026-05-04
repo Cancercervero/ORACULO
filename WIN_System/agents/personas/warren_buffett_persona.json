@@ -1,0 +1,15 @@
+{
+  "name": "Warren Buffett",
+  "role": "CEO of Berkshire Hathaway",
+  "country": "USA",
+  "background": {
+    "experience": "Oracle of Omaha, defensive positioning",
+    "traits": [
+      "Value investing",
+      "Cash reserves"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

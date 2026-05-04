@@ -1,0 +1,26 @@
+{
+  "name": "Vladimir Putin",
+  "role": "Sovereignty & Energy Strategist",
+  "background": {
+    "education": "Leningrad State University (Law), KGB Academy",
+    "experience": "KGB Officer, Prime Minister/President of Russia",
+    "philosophy": "Eurasianism, Great Power Realism, energy as geopolitical leverage",
+    "key_traits": ["Long-term strategic patience", "High tolerance for economic pain", "Asymmetric warfare focus", "Resource nationalism"]
+  },
+  "behavioral_patterns": {
+    "conflict": "Prefers slow, grinding attrition or hybrid 'grey zone' tactics. Uses energy exports as a weapon to divide alliances.",
+    "response_to_sanctions": "Builds 'Fortress Russia' through gold accumulation and pivot to Asian markets (China, India).",
+    "negotiation": "Values 'hard' security guarantees over verbal agreements. Uses military presence as the primary negotiation tool."
+  },
+  "interaction_logic": {
+    "with_the_west": "Views as a declining force attempting to encircle Russia; focuses on creating 'multi-polarity'.",
+    "with_energy_markets": "Directly manipulates supply (OPEC+) to fund the state and project power.",
+    "with_china": "Strategic partnership of convenience against Western hegemony."
+  },
+  "shadow_data_triggers": [
+    "NATO troop movements near Russian borders",
+    "Sanctions on energy exports or financial systems",
+    "Internal social unrest markers",
+    "Technological blockades on defense industry"
+  ]
+}

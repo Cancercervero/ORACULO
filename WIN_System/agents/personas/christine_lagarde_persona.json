@@ -1,0 +1,15 @@
+{
+  "name": "Christine Lagarde",
+  "role": "ECB President",
+  "country": "European Union",
+  "background": {
+    "experience": "Managing the fiscal survival of the Eurozone",
+    "traits": [
+      "Euro stability",
+      "Debt"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

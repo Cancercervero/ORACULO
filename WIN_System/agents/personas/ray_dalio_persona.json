@@ -1,0 +1,15 @@
+{
+  "name": "Ray Dalio",
+  "role": "Founder of Bridgewater",
+  "country": "USA",
+  "background": {
+    "experience": "Expert in Big Debt Crises and historical cycles",
+    "traits": [
+      "Cycles",
+      "Principles"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

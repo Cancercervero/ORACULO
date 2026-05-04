@@ -1,0 +1,15 @@
+{
+  "name": "Justin Trudeau",
+  "role": "Prime Minister of Canada",
+  "country": "Canada",
+  "background": {
+    "experience": "Navigating trade pressures from the Trump administration",
+    "traits": [
+      "Multilateralism",
+      "Environment"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Tim Cook",
+  "role": "CEO of Apple",
+  "country": "USA",
+  "background": {
+    "experience": "Privacy focus, high-margin hardware",
+    "traits": [
+      "Supply chain",
+      "Consumer data"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

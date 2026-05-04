@@ -1,0 +1,15 @@
+{
+  "name": "Vladimir Putin",
+  "role": "President of Russia",
+  "country": "Russia",
+  "background": {
+    "experience": "KGB background, long-term geopolitical strategist",
+    "traits": [
+      "Sovereignty",
+      "Energy Weapon"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

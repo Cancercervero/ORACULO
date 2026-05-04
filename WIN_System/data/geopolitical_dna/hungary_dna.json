@@ -1,0 +1,19 @@
+{
+  "country": "Hungary",
+  "geographic_constraints": {
+    "type": "Landlocked",
+    "critical_nodes": ["Druzhba Pipeline", "Danube River"],
+    "vulnerabilities": "Zero maritime access. Total dependence on neighboring pipelines."
+  },
+  "energy_logic": {
+    "source_primary": "Russia",
+    "substitution_cost": "High (30-40% increase if switching to US/Norway LNG via terminals in Croatia/Poland)",
+    "strategic_stance": "Energy Pragmatism (Neutrality to ensure supply)"
+  },
+  "civilizational_dna": {
+    "religion": "Predominantly Christian (Catholic/Protestant)",
+    "core_identity": "Magyar nationalism, Central European fortress",
+    "ideology": "Sovereigntism, Illiberal Democracy, Traditional Values"
+  },
+  "geopolitical_priority": "Ensuring energy flow and national sovereignty while navigating EU/NATO membership pressures."
+}

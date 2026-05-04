@@ -1,0 +1,15 @@
+{
+  "name": "Nouriel Roubini",
+  "role": "Economist",
+  "country": "USA/Turkey",
+  "background": {
+    "experience": "Dr. Doom, expert in financial meltdowns",
+    "traits": [
+      "Systemic risk",
+      "Pessimism"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

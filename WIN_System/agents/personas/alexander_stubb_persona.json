@@ -1,0 +1,15 @@
+{
+  "name": "Alexander Stubb",
+  "role": "President of Finland",
+  "country": "Finland",
+  "background": {
+    "experience": "Leading Finland's defense integration in the Baltic",
+    "traits": [
+      "NATO Integration",
+      "Security"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

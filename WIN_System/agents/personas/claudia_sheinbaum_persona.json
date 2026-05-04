@@ -1,0 +1,15 @@
+{
+  "name": "Claudia Sheinbaum",
+  "role": "President of Mexico",
+  "country": "Mexico",
+  "background": {
+    "experience": "Managing the complex US-Mexico trade and security relationship",
+    "traits": [
+      "Continuity",
+      "Nearshoring"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

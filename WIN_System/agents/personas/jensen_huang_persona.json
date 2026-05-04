@@ -1,0 +1,15 @@
+{
+  "name": "Jensen Huang",
+  "role": "CEO of NVIDIA",
+  "country": "USA",
+  "background": {
+    "experience": "King of the AI era",
+    "traits": [
+      "Compute power",
+      "AI Hardware"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

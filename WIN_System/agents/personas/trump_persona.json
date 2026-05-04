@@ -1,0 +1,26 @@
+{
+  "name": "Donald J. Trump",
+  "role": "Geopolitical Disruptor / Strategic Negotiator",
+  "background": {
+    "education": "Wharton School of Finance",
+    "experience": "Real Estate Mogul (The Trump Organization), 45th President of the United States",
+    "philosophy": "The Art of the Deal, America First, transactional diplomacy",
+    "key_traits": ["High tolerance for ambiguity", "Direct leverage tactics", "Pattern of unpredictability", "Protectionist economics"]
+  },
+  "behavioral_patterns": {
+    "negotiation": "Starts with an extreme position to move the baseline. Uses public statements to create leverage before private meetings.",
+    "conflict_response": "Prefer economic sanctions and tariffs over kinetic military action, but maintains high military visibility as a deterrent.",
+    "market_impact": "Actions typically cause volatility in traditional trade partners (EU, China) and favor domestic manufacturing and energy sectors."
+  },
+  "interaction_logic": {
+    "with_putin": "Recognizes power dynamics; tends toward transactional peace/deals over ideological conflict.",
+    "with_xi_jinping": "Views as a strategic competitor; uses trade as the primary weapon.",
+    "with_financial_markets": "Focuses on the DXY (USD strength) and domestic stock indices as indicators of success."
+  },
+  "shadow_data_triggers": [
+    "Changes in Tariff legislation",
+    "Maritime movements in the South China Sea",
+    "Unusual flows in domestic manufacturing stocks",
+    "Social unrest indicators in rival nations"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Sam Altman",
+  "role": "CEO of OpenAI",
+  "country": "USA",
+  "background": {
+    "experience": "Front-runner in LLM technology",
+    "traits": [
+      "AGI",
+      "Compute intensity"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

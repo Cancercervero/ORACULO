@@ -1,0 +1,15 @@
+{
+  "name": "Pedro Sanchez",
+  "role": "Prime Minister of Spain",
+  "country": "Spain",
+  "background": {
+    "experience": "Leading Spain through the new European fiscal challenges",
+    "traits": [
+      "Progressive",
+      "EU Integration"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

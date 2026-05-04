@@ -1,0 +1,15 @@
+{
+  "name": "King Abdullah II",
+  "role": "King of Jordan",
+  "country": "Jordan",
+  "background": {
+    "experience": "Maintaining balance in a volatile region",
+    "traits": [
+      "Stability",
+      "Buffer State"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

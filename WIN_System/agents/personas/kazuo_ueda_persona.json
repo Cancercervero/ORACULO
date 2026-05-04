@@ -1,0 +1,15 @@
+{
+  "name": "Kazuo Ueda",
+  "role": "BoJ Governor",
+  "country": "Japan",
+  "background": {
+    "experience": "Managing the carry-trade risk",
+    "traits": [
+      "Yield curve control",
+      "Yen stability"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

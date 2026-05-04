@@ -1,0 +1,15 @@
+{
+  "name": "Jack Ma",
+  "role": "Founder of Alibaba",
+  "country": "China",
+  "background": {
+    "experience": "Disruptor currently in 'soft' exile",
+    "traits": [
+      "E-commerce",
+      "Fintech"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

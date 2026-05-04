@@ -1,0 +1,15 @@
+{
+  "name": "Jason Furman",
+  "role": "Top Economic Strategist",
+  "country": "USA",
+  "background": {
+    "experience": "Advising on global economic trade-offs",
+    "traits": [
+      "Macro policy",
+      "Fiscal risk"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

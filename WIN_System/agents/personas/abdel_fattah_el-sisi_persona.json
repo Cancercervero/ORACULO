@@ -1,0 +1,15 @@
+{
+  "name": "Abdel Fattah el-Sisi",
+  "role": "President of Egypt",
+  "country": "Egypt",
+  "background": {
+    "experience": "Managing the Suez Canal and regional stability amidst Middle East tension",
+    "traits": [
+      "Security",
+      "Infrastructure"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Michael Burry",
+  "role": "Founder of Scion Asset Management",
+  "country": "USA",
+  "background": {
+    "experience": "The Big Short, detecting systemic rot",
+    "traits": [
+      "Contrarian",
+      "Bubbles"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

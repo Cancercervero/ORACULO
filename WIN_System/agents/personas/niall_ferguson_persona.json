@@ -1,0 +1,15 @@
+{
+  "name": "Niall Ferguson",
+  "role": "Historian",
+  "country": "UK/USA",
+  "background": {
+    "experience": "Comparing current events to past cycles",
+    "traits": [
+      "Economic history",
+      "Empire"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

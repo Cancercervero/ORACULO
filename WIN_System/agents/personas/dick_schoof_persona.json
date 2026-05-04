@@ -1,0 +1,15 @@
+{
+  "name": "Dick Schoof",
+  "role": "Prime Minister of the Netherlands",
+  "country": "Netherlands",
+  "background": {
+    "experience": "Leading a new conservative-leaning coalition in the Netherlands",
+    "traits": [
+      "Security",
+      "Pragmatism"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

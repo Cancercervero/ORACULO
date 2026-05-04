@@ -1,0 +1,15 @@
+{
+  "name": "Nassim Taleb",
+  "role": "Author/Philosopher",
+  "country": "Lebanon/USA",
+  "background": {
+    "experience": "Expert in unpredictable events",
+    "traits": [
+      "Antifragility",
+      "Fat Tails"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

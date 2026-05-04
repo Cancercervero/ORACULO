@@ -1,0 +1,19 @@
+{
+  "country": "Mexico",
+  "geographic_constraints": {
+    "type": "Coastal / Border",
+    "critical_nodes": ["US-Mexico Border", "Port of Manzanillo", "Port of Veracruz"],
+    "vulnerabilities": "Extreme dependence on the US market and energy (natural gas imports from Texas)."
+  },
+  "energy_logic": {
+    "source_primary": "Domestic Oil / US Natural Gas",
+    "substitution_cost": "Extremely High (Industrial North depends on US gas pipes)",
+    "strategic_stance": "Resource Sovereignty vs. Integration (Nearshoring priority)"
+  },
+  "civilizational_dna": {
+    "religion": "Predominantly Catholic",
+    "core_identity": "Mestizaje, Revolutionary Nationalism, North American integration",
+    "ideology": "Social Justice, Sovereignty, Economic Integration with North America"
+  },
+  "geopolitical_priority": "Maximizing Nearshoring benefits while managing internal security (cartels) and political autonomy from Washington."
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Mark Zuckerberg",
+  "role": "CEO of Meta",
+  "country": "USA",
+  "background": {
+    "experience": "Controlling the social graph",
+    "traits": [
+      "Open Source AI",
+      "Social Data"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

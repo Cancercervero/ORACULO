@@ -1,0 +1,15 @@
+{
+  "name": "Olaf Scholz",
+  "role": "Chancellor of Germany",
+  "country": "Germany",
+  "background": {
+    "experience": "Managing the European energy and defense pivot",
+    "traits": [
+      "Industrial stability",
+      "Defense"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

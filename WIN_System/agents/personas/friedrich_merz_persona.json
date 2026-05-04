@@ -1,0 +1,15 @@
+{
+  "name": "Friedrich Merz",
+  "role": "Chancellor of Germany",
+  "country": "Germany",
+  "background": {
+    "experience": "Conservative leader who replaced Scholz, moving Germany toward a more hawkish and pro-industry stance",
+    "traits": [
+      "Re-armament",
+      "Economic Focus"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

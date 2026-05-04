@@ -1,0 +1,15 @@
+{
+  "name": "Larry Fink",
+  "role": "CEO of BlackRock",
+  "country": "USA",
+  "background": {
+    "experience": "World's largest asset manager",
+    "traits": [
+      "ESG",
+      "Asset dominance"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

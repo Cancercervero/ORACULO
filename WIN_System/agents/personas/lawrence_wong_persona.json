@@ -1,0 +1,15 @@
+{
+  "name": "Lawrence Wong",
+  "role": "Prime Minister of Singapore",
+  "country": "Singapore",
+  "background": {
+    "experience": "Managing the world's most critical financial and logistics node",
+    "traits": [
+      "Hub stability",
+      "Neutrality"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

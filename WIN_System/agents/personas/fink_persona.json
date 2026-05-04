@@ -1,0 +1,26 @@
+{
+  "name": "Larry Fink",
+  "role": "CEO of BlackRock (Global Asset Management)",
+  "background": {
+    "education": "UCLA",
+    "experience": "Co-founder of BlackRock, manager of $10T+ in assets",
+    "philosophy": "Stakeholder capitalism, ESG (Environmental, Social, and Governance), Aladdin (risk management platform)",
+    "key_traits": ["Long-term structural thinking", "Unparalleled access to world leaders", "Focus on asset allocation and systemic risk management"]
+  },
+  "behavioral_patterns": {
+    "investment_strategy": "Moves the needle on global capital flows. Focuses on 'Energy Transition' and 'Infrastructure' as the next big debt-fueled growth sectors.",
+    "political_leverage": "Influences policy by managing the pension funds and sovereign wealth of nations.",
+    "market_view": "Sees the world through 'Aladdin' (his AI risk platform). If Aladdin flags a risk, BlackRock moves, and the market follows."
+  },
+  "interaction_logic": {
+    "with_governments": "Acts as the 'Shadow Treasury' in times of crisis.",
+    "with_corporations": "Uses voting power to enforce corporate agendas (ESG, sustainability).",
+    "with_disruptors": "Acquires or integrates disruptive tech (like Bitcoin ETFs) once they reach institutional scale."
+  },
+  "shadow_data_triggers": [
+    "Sovereign debt restructuring events",
+    "Major shifts in global pension fund allocations",
+    "Energy policy changes in G7 nations",
+    "Risk alerts from massive Dark Pool movements"
+  ]
+}

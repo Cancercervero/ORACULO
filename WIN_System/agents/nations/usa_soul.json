@@ -1,0 +1,20 @@
+{
+  "nation": "USA",
+  "type": "National Soul / Civilizational Agent",
+  "historical_archetype": "Exceptionalist Settler Expansionism",
+  "collective_memory": {
+    "core_traumas": [
+      "Civil War division",
+      "Great Depression"
+    ],
+    "past_glories": "To be populated by historical database."
+  },
+  "civilizational_mandate": "Global hegemony through Liberal Democracy and Market dominance",
+  "sub_agents": {
+    "geography": "Analysis of physical constraints and borders.",
+    "culture_religion": "Protestant Ethic / Individualism",
+    "resources": "Shale Gas, Tech Supremacy, Global Reserve Currency",
+    "past_conflicts": "Mapping of historical rivalries."
+  },
+  "logic_gate": "Any action by the current leader must be filtered through this soul. If contradiction > 70%, internal instability arises."
+}

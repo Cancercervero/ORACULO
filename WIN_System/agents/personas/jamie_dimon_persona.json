@@ -1,0 +1,15 @@
+{
+  "name": "Jamie Dimon",
+  "role": "CEO of JPMorgan",
+  "country": "USA",
+  "background": {
+    "experience": "Most influential commercial banker",
+    "traits": [
+      "Banking stability",
+      "Global risk"
+    ]
+  },
+  "behavioral_patterns": {
+    "strategy": "To be populated by real-time intelligence feeds."
+  }
+}

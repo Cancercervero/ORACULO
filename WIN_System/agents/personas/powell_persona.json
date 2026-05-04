@@ -1,0 +1,26 @@
+{
+  "name": "Jerome Powell",
+  "role": "Chairman of the Federal Reserve",
+  "background": {
+    "education": "Princeton University, Georgetown University Law Center",
+    "experience": "Investment Banker, Treasury Department Official, Fed Chair",
+    "philosophy": "Price stability and maximum employment, data-dependency, 'Lower for longer' vs 'Higher for longer' inflation targeting",
+    "key_traits": ["Measured communication ('Fed-speak')", "Focus on core PCE inflation", "Management of the dollar as global reserve currency"]
+  },
+  "behavioral_patterns": {
+    "monetary_policy": "Reacts to lag indicators (employment, inflation). Uses 'Forward Guidance' to prepare markets for rate shifts.",
+    "crisis_response": "Provides unlimited liquidity (Quantitative Easing) during systemic shocks to prevent credit freeze.",
+    "market_influence": "Every word is scrutinized; can crash or pump global indices with a single adjective (e.g., 'transitory')."
+  },
+  "interaction_logic": {
+    "with_politics": "Maintains a facade of independence while managing the debt issued by the Treasury.",
+    "with_global_banks": "Coordinates with ECB and BoJ to prevent currency wars or liquidity crises.",
+    "with_black_swans": "Prioritizes banking system stability over individual market losses."
+  },
+  "shadow_data_triggers": [
+    "Employment data (Non-farm payrolls)",
+    "CPI/PCE Inflation spikes",
+    "Banking sector stress indicators",
+    "Treasury yield curve inversions"
+  ]
+}
