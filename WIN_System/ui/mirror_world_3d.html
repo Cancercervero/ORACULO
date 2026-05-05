@@ -272,8 +272,8 @@ const agentPoints = RAW.map(p => {
     lat: pt[0] + r * Math.sin(a),
     lng: pt[1] + r * Math.cos(a),
     color: TC[p.t] || '#0f0',
-    radius: 0.35,
-    alt: 0.004,
+    radius: 0.65,
+    alt: 0.012,
   };
 }).filter(Boolean);
 
@@ -287,13 +287,21 @@ const world = Globe()(document.getElementById('globe-wrap'))
   .showAtmosphere(true)
   .atmosphereColor('#1a4080')
   .atmosphereAltitude(0.20)
+  // Country borders
+  .polygonsData([])
+  .polygonCapColor(() => 'rgba(0,0,0,0)')
+  .polygonSideColor(() => 'rgba(0,0,0,0)')
+  .polygonStrokeColor(() => '#1a5c1a')
+  .polygonAltitude(0.001)
+  // Points: agents + satellites
   .pointsData([])
   .pointLat(d => d.lat)
   .pointLng(d => d.lng)
   .pointColor(d => d.color)
   .pointRadius(d => d.radius)
   .pointAltitude(d => d.alt || 0)
-  .pointResolution(6)
+  .pointResolution(8)
+  // Arcs
   .arcsData([])
   .arcStartLat(d => d.slat).arcStartLng(d => d.slng)
   .arcEndLat(d => d.elat).arcEndLng(d => d.elng)
@@ -301,26 +309,40 @@ const world = Globe()(document.getElementById('globe-wrap'))
   .arcDashLength(0.4).arcDashGap(0.15)
   .arcDashAnimateTime(3000)
   .arcStroke(0.4).arcAltitude(0.18)
+  // Jamming rings
   .ringsData([])
   .ringLat(d => d.lat).ringLng(d => d.lng)
   .ringColor(() => '#ff2222')
   .ringMaxRadius(4).ringPropagationSpeed(2).ringRepeatPeriod(1200)
+  // Aircraft + ships as HTML icons
   .htmlElementsData([])
   .htmlElementLat(d => d.lat)
   .htmlElementLng(d => d.lng)
-  .htmlElementAltitude(0.005)
+  .htmlElementAltitude(d => d.alt || 0.005)
   .htmlElement(d => {
     const el = document.createElement('div');
     if (d._src === 'aircraft') {
-      el.style.cssText = `pointer-events:none;color:#00eeff;font-size:9px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 4px #00eeffaa;user-select:none`;
+      el.style.cssText = `pointer-events:none;color:#00eeff;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #00eeff;user-select:none`;
       el.textContent = '▲';
     } else if (d._src === 'ship') {
-      el.style.cssText = `pointer-events:none;color:#44aaff;font-size:10px;line-height:1;transform:rotate(${(d.heading||0)}deg);text-shadow:0 0 4px #44aaffaa;user-select:none`;
+      el.style.cssText = `pointer-events:none;color:#44aaff;font-size:11px;line-height:1;text-shadow:0 0 6px #44aaff;user-select:none`;
       el.textContent = '⬡';
+    } else if (d._src === 'mfl') {
+      el.style.cssText = `pointer-events:none;color:#ff4400;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #ff4400;user-select:none`;
+      el.textContent = '▲';
     }
     return el;
   })
   .onPointHover(showTip);
+
+// Load country borders from globe.gl example dataset (CORS-friendly)
+fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
+  .then(r => r.json())
+  .then(countries => {
+    world.polygonsData(countries.features);
+    addFeed(countries.features.length + ' países cargados', 'b');
+  })
+  .catch(() => addFeed('Fronteras: sin conexión', 'w'));
 
 // Set initial camera
 world.pointOfView({ lat: 30, lng: 15, altitude: 2.2 });
@@ -361,15 +383,14 @@ world.arcsData(arcData);
 // DATA STORES
 // ═══════════════════════════════════════════════════
 let aircraftPoints = [];
+let milFlightPoints = [];
 let satPoints = [];
 let shipPoints = [];
 let jammingRings = [];
 
 function updateGlobe() {
-  // Agents + satellites as efficient 3D points
   world.pointsData([...agentPoints, ...satPoints]);
-  // Aircraft (triangles rotated by heading) + ships as HTML icons — pointer-events:none = no mouse block
-  world.htmlElementsData([...aircraftPoints.slice(0, 2000), ...shipPoints]);
+  world.htmlElementsData([...aircraftPoints.slice(0, 3000), ...milFlightPoints, ...shipPoints]);
   world.ringsData(jammingRings);
 }
 
@@ -604,6 +625,10 @@ async function pollSB() {
     document.getElementById('bar-uav').textContent = uavs.length + ' UAVs';
 
     const mfl = (data.military_flights || []).filter(f => f.lat && f.lng);
+    milFlightPoints = mfl.map(f => ({
+      _src: 'mfl', lat: f.lat, lng: f.lng, callsign: f.callsign,
+      model: f.model, country: f.country, heading: f.heading || 0, alt: 0.006,
+    }));
     if (mfl.length) addFeed(mfl.length + ' vuelos militares (SB)', 'w');
 
     const events = (data.liveuamap || []).filter(e => e.lat && e.lng);
@@ -619,7 +644,7 @@ async function pollSB() {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-agentPoints.forEach(a => { a.alt = 0.004; });
+agentPoints.forEach(a => { a.alt = 0.012; });
 updateGlobe();
 addFeed('Sistema WIN + MirrorWorld inicializado');
 addFeed(agentPoints.length + ' agentes WIN en globo');
