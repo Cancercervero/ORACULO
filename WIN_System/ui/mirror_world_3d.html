@@ -145,7 +145,7 @@ window.onerror = function(msg, src, line) {
 const AISSTREAM_KEY = '65616234dee963888f8b0a0434348c8061101edd';
 const SB_URL        = 'http://localhost:8000/api/live-data/fast';
 const OPENSKY_URL   = '/api/aircraft';
-const CELESTRAK_TLE = 'https://celestrak.org/NORAD/elements/visual.txt';
+const CELESTRAK_TLE = '/api/tle';
 // ═══════════════════════════════════════════════════
 
 const C = {
@@ -476,13 +476,13 @@ world.htmlElement(d => {
       const fpKm = Math.round(fpDeg * 111);
       const velKms = Math.sqrt(398600 / (6371 + h));
       const periodMin = Math.round(2 * Math.PI * Math.sqrt(Math.pow(6371 + h, 3) / 398600) / 60);
-      // Mostrar líder del país dueño del satélite
-      applyLeaderToTip(satCountry(d.name));
+      applyLeaderToTip(d.country || satCountry(d.name));
       // Info del satélite en fila inferior
       const satRow = document.getElementById('tip-sat-row');
       satRow.style.display = 'block';
       document.getElementById('tip-sat-name').textContent = '🛰 ' + d.name;
-      document.getElementById('tip-sat-info').textContent = `Alt: ${Math.round(h)} km  ·  ${velKms.toFixed(1)} km/s`;
+      const missionTxt = d.mission ? `  [${d.mission}]` : '';
+      document.getElementById('tip-sat-info').textContent = `Alt: ${Math.round(h)} km  ·  ${velKms.toFixed(1)} km/s${missionTxt}`;
       document.getElementById('tip-sat-cov').textContent  = `Cobertura: ~${fpKm.toLocaleString()} km  ·  ${periodMin} min`;
       const tipEl = document.getElementById('tip');
       tipEl.style.display = 'block';
@@ -633,10 +633,13 @@ function showTip(point, cx, cy) {
       info   = (FLAG[country] || '') + '  ' + (country || 'MMSI: ' + (point.mmsi || '—'));
       detail = 'MMSI: ' + (point.mmsi || '—');
     } else if (point._src === 'mfl') {
-      country = point.country || '';
-      name    = '✈ MIL ' + (point.callsign || '—');
-      info    = (point.model || '—') + '  ' + (FLAG[country] || '') + ' ' + country;
-      detail  = '';
+      country = COUNTRY_MAP[point.country] || point.country || '';
+      name    = '✈ ' + (point.callsign || '—');
+      const op = point.alert_operator || point.model || '—';
+      info    = op + '  ' + (FLAG[country] || '') + ' ' + country;
+      const kts2 = point.speed ? Math.round(point.speed) + ' kts' : '';
+      const ft2  = point.altM  ? Math.round(point.altM * 3.281).toLocaleString() + ' ft' : '';
+      detail  = [kts2, ft2].filter(Boolean).join('  ·  ');
     }
     applyLeaderToTip(country);
     document.getElementById('tip-sat-name').textContent = name;
@@ -680,6 +683,16 @@ function addFeed(txt, cls = '') {
 const shipMap = new Map();
 let shipsDirty = false;
 
+// Restore last known positions from localStorage (max 2h old)
+try {
+  const saved = JSON.parse(localStorage.getItem('win_ships') || '{}');
+  const cutoff = Date.now() - 7200000;
+  for (const [k, v] of Object.entries(saved)) {
+    if ((v.ts || 0) > cutoff) shipMap.set(k, v);
+  }
+  if (shipMap.size) { shipsDirty = true; addFeed(shipMap.size + ' buques (última posición conocida)', 'b'); }
+} catch {}
+
 setInterval(() => {
   if (!shipsDirty) return;
   shipPoints = [...shipMap.values()].map(s => ({
@@ -691,6 +704,12 @@ setInterval(() => {
   document.getElementById('bar-ships').textContent = shipMap.size + ' buques AIS';
   updateGlobe();
   shipsDirty = false;
+  // Save to localStorage
+  try {
+    const obj = {};
+    shipMap.forEach((v, k) => { obj[k] = v; });
+    localStorage.setItem('win_ships', JSON.stringify(obj));
+  } catch {}
 }, 2000);
 
 function connectAIS() {
@@ -716,6 +735,7 @@ function connectAIS() {
         lat: m.latitude, lng: m.longitude,
         name: (m.ShipName || '').trim() || String(m.MMSI),
         mmsi: m.MMSI,
+        ts: Date.now(),
       });
       shipsDirty = true;
     } catch {}
@@ -772,7 +792,7 @@ let satRecords = [];
 
 async function loadSatellites() {
   try {
-    const res = await fetch(CELESTRAK_TLE, { signal: AbortSignal.timeout(12000) });
+    const res = await fetch(CELESTRAK_TLE, { signal: AbortSignal.timeout(25000) });
     if (!res.ok) throw new Error('celestrak ' + res.status);
     const text = await res.text();
     const lines = text.trim().split(/\r?\n/);
@@ -825,43 +845,79 @@ function updateSatPositions() {
   updateGlobe();
 }
 
+// Satellite mission → color
+const SAT_COLOR = {
+  military: '#ff4444', recon: '#ff4444', sigint: '#ffffff',
+  navigation: '#4488ff', 'early-warning': '#ff00ff', sar: '#00ffff',
+  'space-station': '#ffdd00', default: '#ccccff',
+};
+
 // ═══════════════════════════════════════════════════
-// SHADOWBROKER (jamming rings + UAVs + ships fallback)
+// SHADOWBROKER backend (:8000) — fuente principal de
+// satélites, vuelos militares/rastreados, GPS jamming
 // ═══════════════════════════════════════════════════
 async function pollSB() {
   try {
-    const r = await fetch(SB_URL, { signal: AbortSignal.timeout(4000) });
+    const r = await fetch(SB_URL, { signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error('sb ' + r.status);
     const data = await r.json();
 
-    if (!AISSTREAM_KEY) {
-      const ships = (data.ships || []).filter(s => s.lat && s.lng);
-      shipPoints = ships.map(s => ({
-        _src: 'ship', lat: s.lat, lng: s.lng, name: s.name, mmsi: s.mmsi,
-        color: '#44aaff', radius: 0.2, alt: 0.001,
+    // --- Satélites (ya propagados por ShadowBroker — sin TLE en browser) ---
+    const sbSats = (data.satellites || []).filter(s => s.lat && s.lng);
+    if (sbSats.length) {
+      satPoints = sbSats.map(s => ({
+        _src: 'sat', name: s.name, altKm: String(Math.round(s.alt_km || 0)),
+        country: s.country || '', mission: s.mission || '',
+        lat: s.lat, lng: s.lng,
+        color: SAT_COLOR[s.mission] || SAT_COLOR.default,
+        radius: 0.22,
+        alt: Math.min((s.alt_km || 400) / 6371, 0.5),
       }));
-      document.getElementById('cnt-ships').textContent = ships.length;
-      document.getElementById('bar-ships').textContent = ships.length + ' buques (SB)';
+      document.getElementById('cnt-sat').textContent = satPoints.length;
+      document.getElementById('bar-sat').textContent = satPoints.length + ' satélites';
+      document.getElementById('cel-status').textContent = satPoints.length + ' sats';
+      document.getElementById('cel-status').className = 'g';
+      updateGlobe();
     }
 
+    // --- Barcos: AIS WebSocket es primario, ShadowBroker llena el gap ---
+    const sbShips = (data.ships || []).filter(s => s.lat && s.lng);
+    for (const s of sbShips) {
+      const key = 'sb_' + (s.name || '').replace(/\s/g, '_');
+      if (!shipMap.has(key)) {
+        shipMap.set(key, { lat: s.lat, lng: s.lng, name: s.name || 'BUQUE', mmsi: key, ts: Date.now() });
+        shipsDirty = true;
+      }
+    }
+
+    // --- GPS Jamming ---
     const jam = (data.gps_jamming || []).filter(z => z.lat && z.lng);
     jammingRings = jam.map(z => ({ lat: z.lat, lng: z.lng }));
     document.getElementById('cnt-jam').textContent = jam.length;
     document.getElementById('bar-jam').textContent = jam.length + ' GPS jamming';
     if (jam.length) addFeed('GPS Jamming: ' + jam.length + ' zonas', 'a');
 
+    // --- Militares + Rastreados (tracked_flights incluye oligarcas, gov, ISR) ---
+    const allMfl = [
+      ...(data.military_flights || []),
+      ...(data.tracked_flights || []),
+    ].filter(f => f.lat && f.lng);
+    milFlightPoints = allMfl.map(f => ({
+      _src: 'mfl', lat: f.lat, lng: f.lng, callsign: f.callsign,
+      model: f.model || f.alert_type || '', country: f.country || '',
+      alert_operator: f.alert_operator || '',
+      heading: f.heading || 0, alt: 0.006,
+      altM: f.alt || 0, speed: f.speed_knots || 0,
+    }));
+    if (allMfl.length) addFeed(allMfl.length + ' vuelos militares/rastreados (SB)', 'w');
+
+    // --- UAVs ---
     const uavs = (data.uavs || []).filter(u => u.lat && u.lng);
     document.getElementById('bar-uav').textContent = uavs.length + ' UAVs';
 
-    const mfl = (data.military_flights || []).filter(f => f.lat && f.lng);
-    milFlightPoints = mfl.map(f => ({
-      _src: 'mfl', lat: f.lat, lng: f.lng, callsign: f.callsign,
-      model: f.model, country: f.country, heading: f.heading || 0, alt: 0.006,
-    }));
-    if (mfl.length) addFeed(mfl.length + ' vuelos militares (SB)', 'w');
-
-    const events = (data.liveuamap || []).filter(e => e.lat && e.lng);
-    if (events.length) addFeed('LiveUAMap: ' + events.length + ' eventos', 'a');
+    // --- GDELT events ---
+    const gdelt = (data.gdelt || []).filter(e => e.lat && e.lng);
+    if (gdelt.length) addFeed('GDELT: ' + gdelt.length + ' eventos geopolíticos', 'a');
 
     updateGlobe();
   } catch {
@@ -880,8 +936,12 @@ addFeed(agentPoints.length + ' agentes WIN en globo');
 
 connectAIS();
 pollOpenSky(); setInterval(pollOpenSky, 30000);
-loadSatellites().then(() => { updateSatPositions(); setInterval(updateSatPositions, 10000); });
-pollSB(); setInterval(pollSB, 30000);
+// ShadowBroker proporciona satélites pre-propagados; CelesTrak solo como fallback si SB falla
+pollSB();
+setTimeout(() => {
+  if (!satPoints.length) loadSatellites().then(() => { updateSatPositions(); setInterval(updateSatPositions, 10000); });
+}, 5000);
+setInterval(pollSB, 30000);
 </script>
 </body>
 </html>

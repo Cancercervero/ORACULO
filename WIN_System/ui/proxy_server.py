@@ -14,6 +14,13 @@ CACHE_TTL = 60
 
 OPENSKY_URL = 'https://opensky-network.org/api/states/all'
 
+TLE_URLS = [
+    'https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle',
+    'https://celestrak.org/NORAD/elements/visual.txt',
+    'https://www.celestrak.com/NORAD/elements/visual.txt',
+]
+TLE_TTL = 3600  # 1 hora — TLE no cambia tan seguido
+
 # airplanes.live: 9 regiones cubre ~90% del tráfico global
 APLIVE_REGIONS = [
     (51, 0, 500),    # Europa
@@ -98,7 +105,37 @@ class ProxyHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split('?')[0]
-        if path == '/api/aircraft':
+        if path == '/api/tle':
+            now = time.time()
+            cached = _cache.get('tle')
+            if cached and (now - cached[1]) < TLE_TTL:
+                data = cached[0]
+                print(f'[proxy] /api/tle cache hit')
+            else:
+                data = None
+                for url in TLE_URLS:
+                    try:
+                        data = _fetch(url, timeout=20)
+                        _cache['tle'] = (data, now)
+                        print(f'[proxy] TLE OK from {url.split("?")[0].split("/")[-1]} ({len(data)} bytes)')
+                        break
+                    except Exception as e:
+                        print(f'[proxy] TLE fail {url}: {e}')
+                if data is None:
+                    if cached:
+                        data = cached[0]
+                        print(f'[proxy] TLE stale cache')
+                    else:
+                        self.send_response(502)
+                        self.end_headers()
+                        self.wfile.write(b'TLE fetch failed')
+                        return
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(data)
+        elif path == '/api/aircraft':
             now = time.time()
             cached = _cache.get('aircraft')
             if cached and (now - cached[1]) < CACHE_TTL:
