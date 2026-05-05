@@ -107,6 +107,17 @@
 </div>
 
 <script>
+// Error visible en UI (antes de todo)
+window.onerror = function(msg, src, line) {
+  const f = document.getElementById('feed');
+  if (!f) return false;
+  const d = document.createElement('div');
+  d.className = 'fi a';
+  d.textContent = '> JS ERR L' + line + ': ' + msg;
+  f.insertBefore(d, f.firstChild);
+  return false;
+};
+
 // ═══════════════════════════════════════════════════
 // CONFIG
 const AISSTREAM_KEY = '65616234dee963888f8b0a0434348c8061101edd';
@@ -278,71 +289,106 @@ const agentPoints = RAW.map(p => {
 }).filter(Boolean);
 
 // ═══════════════════════════════════════════════════
-// GLOBE.GL INIT
+// GLOBE.GL INIT — sin chaining, llamadas separadas
 // ═══════════════════════════════════════════════════
-const world = Globe()(document.getElementById('globe-wrap'))
-  .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
-  .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-  .backgroundColor('#000008')
-  .showAtmosphere(true)
-  .atmosphereColor('#1a4080')
-  .atmosphereAltitude(0.20)
-  // Country borders
-  .polygonsData([])
-  .polygonCapColor(() => 'rgba(0,0,0,0)')
-  .polygonSideColor(() => 'rgba(0,0,0,0)')
-  .polygonStrokeColor(() => '#1a5c1a')
-  .polygonAltitude(0.001)
-  // Points: agents + satellites
-  .pointsData([])
-  .pointLat(d => d.lat)
-  .pointLng(d => d.lng)
-  .pointColor(d => d.color)
-  .pointRadius(d => d.radius)
-  .pointAltitude(d => d.alt || 0)
-  .pointResolution(8)
-  // Arcs
-  .arcsData([])
-  .arcStartLat(d => d.slat).arcStartLng(d => d.slng)
-  .arcEndLat(d => d.elat).arcEndLng(d => d.elng)
-  .arcColor(d => [d.col, d.col])
-  .arcDashLength(0.4).arcDashGap(0.15)
-  .arcDashAnimateTime(3000)
-  .arcStroke(0.4).arcAltitude(0.18)
-  // Jamming rings
-  .ringsData([])
-  .ringLat(d => d.lat).ringLng(d => d.lng)
-  .ringColor(() => '#ff2222')
-  .ringMaxRadius(4).ringPropagationSpeed(2).ringRepeatPeriod(1200)
-  // Aircraft + ships as HTML icons
-  .htmlElementsData([])
-  .htmlElementLat(d => d.lat)
-  .htmlElementLng(d => d.lng)
-  .htmlElementAltitude(d => d.alt || 0.005)
-  .htmlElement(d => {
-    const el = document.createElement('div');
-    if (d._src === 'aircraft') {
-      el.style.cssText = `pointer-events:none;color:#00eeff;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #00eeff;user-select:none`;
-      el.textContent = '▲';
-    } else if (d._src === 'ship') {
-      el.style.cssText = `pointer-events:none;color:#44aaff;font-size:11px;line-height:1;text-shadow:0 0 6px #44aaff;user-select:none`;
-      el.textContent = '⬡';
-    } else if (d._src === 'mfl') {
-      el.style.cssText = `pointer-events:none;color:#ff4400;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #ff4400;user-select:none`;
-      el.textContent = '▲';
-    }
-    return el;
-  })
-  .onPointHover(showTip);
+const world = Globe()(document.getElementById('globe-wrap'));
+world.globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg');
+world.backgroundColor('#000008');
+world.showAtmosphere(true);
+world.atmosphereColor('#1a4080');
+world.atmosphereAltitude(0.20);
+world.pointsData([]);
+world.pointLat(d => d.lat);
+world.pointLng(d => d.lng);
+world.pointColor(d => d.color);
+world.pointRadius(d => d.radius);
+world.pointAltitude(d => d.alt || 0);
+world.pointResolution(8);
+world.arcsData([]);
+world.arcStartLat(d => d.slat);
+world.arcStartLng(d => d.slng);
+world.arcEndLat(d => d.elat);
+world.arcEndLng(d => d.elng);
+world.arcColor(d => [d.col, d.col]);
+world.arcDashLength(0.4);
+world.arcDashGap(0.15);
+world.arcDashAnimateTime(3000);
+world.arcStroke(0.4);
+world.arcAltitude(0.18);
+world.ringsData([]);
+world.ringLat(d => d.lat);
+world.ringLng(d => d.lng);
+world.ringMaxRadius(d => d.fpDeg != null ? d.fpDeg : 4);
+world.ringPropagationSpeed(d => d._fp ? 0.4 : 2);
+world.ringRepeatPeriod(d => d._fp ? 9000 : 1200);
+world.ringColor(d => d._fp ? '#8888ff' : '#ff2222');
+world.htmlElementsData([]);
+world.htmlLat(d => d.lat);
+world.htmlLng(d => d.lng);
+world.htmlAltitude(d => d.alt || 0.005);
+world.htmlElement(d => {
+  const el = document.createElement('div');
+  if (d._src === 'sat') {
+    el.style.cssText = `
+      width:6px;height:6px;border-radius:50%;
+      background:#ccccff;
+      box-shadow:0 0 8px #ccccff,0 0 2px #fff;
+      pointer-events:auto;cursor:pointer;
+      transform:translate(-50%,-50%);
+      position:relative;
+    `;
+    el.addEventListener('mouseenter', evt => {
+      const h = parseFloat(d.altKm) || 400;
+      const fpDeg = 90 - (180 / Math.PI) * Math.asin(6371 / (6371 + h));
+      const fpKm = Math.round(fpDeg * 111);
+      const velKms = Math.sqrt(398600 / (6371 + h));
+      const periodMin = Math.round(2 * Math.PI * Math.sqrt(Math.pow(6371 + h, 3) / 398600) / 60);
+      document.getElementById('tip-name').textContent = '🛰 ' + d.name;
+      document.getElementById('tip-role').textContent =
+        `Alt: ${Math.round(h)} km  ·  ${velKms.toFixed(1)} km/s`;
+      document.getElementById('tip-ctry').textContent =
+        `Cobertura: ~${fpKm.toLocaleString()} km radio  ·  Período: ${periodMin} min`;
+      const tipEl = document.getElementById('tip');
+      tipEl.style.display = 'block';
+      tipEl.style.left = (evt.clientX + 14) + 'px';
+      tipEl.style.top  = (evt.clientY - 30) + 'px';
+      world.ringsData([...jammingRings, { lat: d.lat, lng: d.lng, _fp: true, fpDeg }]);
+    });
+    el.addEventListener('mouseleave', () => {
+      document.getElementById('tip').style.display = 'none';
+      world.ringsData(jammingRings);
+    });
+  } else if (d._src === 'aircraft') {
+    el.style.cssText = `pointer-events:none;color:#00eeff;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #00eeff;user-select:none`;
+    el.textContent = '▲';
+  } else if (d._src === 'ship') {
+    el.style.cssText = `pointer-events:none;color:#44aaff;font-size:11px;line-height:1;text-shadow:0 0 6px #44aaff;user-select:none`;
+    el.textContent = '⬡';
+  } else if (d._src === 'mfl') {
+    el.style.cssText = `pointer-events:none;color:#ff4400;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #ff4400;user-select:none`;
+    el.textContent = '▲';
+  }
+  return el;
+});
+world.onPointHover(showTip);
 
-// Load country borders from globe.gl example dataset (CORS-friendly)
-fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
-  .then(r => r.json())
-  .then(countries => {
-    world.polygonsData(countries.features);
-    addFeed(countries.features.length + ' países cargados', 'b');
-  })
-  .catch(() => addFeed('Fronteras: sin conexión', 'w'));
+// Bordes de países
+try {
+  world.polygonsData([]);
+  world.polygonCapColor(() => 'rgba(0,0,0,0)');
+  world.polygonSideColor(() => 'rgba(0,0,0,0)');
+  world.polygonStrokeColor(() => '#1a5c1a');
+  world.polygonAltitude(0.001);
+  fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
+    .then(r => r.json())
+    .then(countries => {
+      world.polygonsData(countries.features);
+      addFeed(countries.features.length + ' países cargados', 'b');
+    })
+    .catch(() => addFeed('Fronteras: sin conexión', 'w'));
+} catch(e) {
+  addFeed('Polígonos: ' + e.message, 'w');
+}
 
 // Set initial camera
 world.pointOfView({ lat: 30, lng: 15, altitude: 2.2 });
@@ -389,8 +435,8 @@ let shipPoints = [];
 let jammingRings = [];
 
 function updateGlobe() {
-  world.pointsData([...agentPoints, ...satPoints]);
-  world.htmlElementsData([...aircraftPoints.slice(0, 3000), ...milFlightPoints, ...shipPoints]);
+  world.pointsData(agentPoints);
+  world.htmlElementsData([...satPoints, ...aircraftPoints.slice(0, 3000), ...milFlightPoints, ...shipPoints]);
   world.ringsData(jammingRings);
 }
 

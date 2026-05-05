@@ -8,8 +8,13 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         '/api/aircraft': 'https://opensky-network.org/api/states/all',
     }
 
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        super().end_headers()
+
     def do_GET(self):
-        target = self.PROXY_ROUTES.get(self.path)
+        target = self.PROXY_ROUTES.get(self.path.split('?')[0])
         if target:
             try:
                 req = urllib.request.Request(target, headers={'User-Agent': 'Mozilla/5.0'})
