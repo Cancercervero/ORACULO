@@ -38,13 +38,22 @@
 
     #tip {
       position: absolute; z-index: 20; pointer-events: none;
-      background: rgba(0,14,0,0.95); border: 1px solid #0f0;
-      padding: 8px 12px; font-size: 11px; max-width: 260px;
-      display: none; white-space: nowrap;
+      background: rgba(0,14,0,0.97); border: 1px solid #0f0;
+      padding: 10px 12px; font-size: 11px; max-width: 280px;
+      display: none;
     }
-    #tip .tn { color: #00ff41; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
-    #tip .tr { color: #aaffaa; margin-bottom: 2px; }
-    #tip .tc { color: #ffdd00; }
+    #tip-agent-row { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+    #tip-photo {
+      width: 64px; height: 64px; object-fit: cover;
+      border: 1px solid #1a6b1a; flex-shrink: 0;
+      background: #001800;
+    }
+    #tip-flag { font-size: 28px; line-height: 1; }
+    #tip-agent-info { display: flex; flex-direction: column; gap: 2px; }
+    #tip .tn { color: #00ff41; font-size: 12px; font-weight: bold; }
+    #tip .tr { color: #aaffaa; font-size: 10px; }
+    #tip .tc { color: #ffdd00; font-size: 10px; }
+    #tip-sat-row { display: none; }
 
     #sb-bar {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
@@ -92,9 +101,22 @@
 </div>
 
 <div id="tip">
-  <div class="tn" id="tip-name"></div>
-  <div class="tr" id="tip-role"></div>
-  <div class="tc" id="tip-ctry"></div>
+  <div id="tip-agent-row">
+    <img id="tip-photo" src="" alt="" />
+    <div style="display:flex;flex-direction:column;gap:3px;justify-content:center;">
+      <div id="tip-flag"></div>
+      <div id="tip-agent-info">
+        <div class="tn" id="tip-name"></div>
+        <div class="tr" id="tip-role"></div>
+        <div class="tc" id="tip-ctry"></div>
+      </div>
+    </div>
+  </div>
+  <div id="tip-sat-row">
+    <div class="tn" id="tip-sat-name"></div>
+    <div class="tr" id="tip-sat-info"></div>
+    <div class="tc" id="tip-sat-cov"></div>
+  </div>
 </div>
 
 <div id="sb-bar">
@@ -270,6 +292,117 @@ const RAW = [
 
 const TC = { political:'#00ff41', financial:'#ffdd00', tech:'#00eeff', military:'#ff6600' };
 
+const FLAG = {
+  Egypt:'🇪🇬',Algeria:'🇩🇿',Niger:'🇳🇪',Finland:'🇫🇮',Iran:'🇮🇷',UK:'🇬🇧',
+  Jamaica:'🇯🇲',Australia:'🇦🇺',Portugal:'🇵🇹',Thailand:'🇹🇭',Malaysia:'🇲🇾',
+  Mali:'🇲🇱',Syria:'🇸🇾',Israel:'🇮🇱',Guatemala:'🇬🇹',Nigeria:'🇳🇬',
+  Philippines:'🇵🇭',Suriname:'🇸🇷','European Union':'🇪🇺',Mexico:'🇲🇽',
+  'South Africa':'🇿🇦',Ecuador:'🇪🇨',Nicaragua:'🇳🇮',Netherlands:'🇳🇱',
+  Peru:'🇵🇪',USA:'🇺🇸',Poland:'🇵🇱',France:'🇫🇷',Germany:'🇩🇪',Chile:'🇨🇱',
+  Colombia:'🇨🇴','Burkina Faso':'🇧🇫',Guyana:'🇬🇾',China:'🇨🇳',Canada:'🇨🇦',
+  Italy:'🇮🇹',Argentina:'🇦🇷',Belize:'🇧🇿',Panama:'🇵🇦',Kazakhstan:'🇰🇿',
+  Japan:'🇯🇵','South Korea':'🇰🇷','North Korea':'🇰🇵',Jordan:'🇯🇴',
+  Singapore:'🇸🇬','Dominican Republic':'🇩🇴',Bolivia:'🇧🇴',Brazil:'🇧🇷',
+  Cuba:'🇨🇺','Saudi Arabia':'🇸🇦',UAE:'🇦🇪',Bangladesh:'🇧🇩',India:'🇮🇳',
+  'El Salvador':'🇸🇻',Venezuela:'🇻🇪',Indonesia:'🇮🇩',Turkey:'🇹🇷',
+  Uzbekistan:'🇺🇿',Pakistan:'🇵🇰',Qatar:'🇶🇦',Vietnam:'🇻🇳',Russia:'🇷🇺',
+  Ukraine:'🇺🇦',Kenya:'🇰🇪',Uruguay:'🇺🇾',Honduras:'🇭🇳',Hungary:'🇭🇺',
+  Spain:'🇪🇸','Costa Rica':'🇨🇷',Paraguay:'🇵🇾',Lebanon:'🇱🇧',
+};
+
+const photoCache = new Map();
+async function fetchWikiPhoto(name) {
+  if (photoCache.has(name)) return photoCache.get(name);
+  try {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&pithumbsize=100&format=json&origin=*`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const data = await r.json();
+    const page = Object.values(data.query.pages)[0];
+    const src = page?.thumbnail?.source || '';
+    photoCache.set(name, src);
+    return src;
+  } catch { photoCache.set(name, ''); return ''; }
+}
+
+// OpenSky country name → our country key
+const COUNTRY_MAP = {
+  'United States':'USA','United Kingdom':'UK','Russian Federation':'Russia',
+  'Korea, Republic of':'South Korea',"Korea, Democratic People's Republic of":'North Korea',
+  'China':'China','Iran, Islamic Republic of':'Iran','Syrian Arab Republic':'Syria',
+  'Viet Nam':'Vietnam','Bolivia, Plurinational State of':'Bolivia',
+  'Venezuela, Bolivarian Republic of':'Venezuela','Tanzania, United Republic of':'Kenya',
+  'Netherlands':'Netherlands','Germany':'Germany','France':'France',
+  'Spain':'Spain','Italy':'Italy','Turkey':'Turkey','India':'India',
+  'Pakistan':'Pakistan','Bangladesh':'Bangladesh','Indonesia':'Indonesia',
+  'Australia':'Australia','Canada':'Canada','Brazil':'Brazil','Mexico':'Mexico',
+  'Argentina':'Argentina','Colombia':'Colombia','Chile':'Chile',
+  'Saudi Arabia':'Saudi Arabia','United Arab Emirates':'UAE',
+  'Israel':'Israel','Iran':'Iran','Japan':'Japan','Philippines':'Philippines',
+};
+
+// Country → top political leader lookup (first political agent per country)
+const countryLeader = {};
+for (const p of RAW) {
+  if (p.t === 'political' && !countryLeader[p.c]) countryLeader[p.c] = p;
+}
+
+function findLeader(country) {
+  if (!country) return null;
+  const mapped = COUNTRY_MAP[country] || country;
+  if (countryLeader[mapped]) return countryLeader[mapped];
+  const lc = mapped.toLowerCase();
+  for (const [k, v] of Object.entries(countryLeader)) {
+    if (lc.includes(k.toLowerCase()) || k.toLowerCase().includes(lc)) return v;
+  }
+  return null;
+}
+
+function satCountry(name) {
+  const n = (name || '').toUpperCase();
+  if (/COSMOS|GLONASS|MOLNIYA|SOYUZ|PROGRESS/.test(n)) return 'Russia';
+  if (/FENGYUN|TIANGONG|BEIDOU|CZ-/.test(n)) return 'China';
+  if (/INSAT|GSAT|CARTOSAT/.test(n)) return 'India';
+  if (/ASTRA|SENTINEL|METEOSAT/.test(n)) return 'European Union';
+  return 'USA';
+}
+
+// MMSI Maritime Identification Digits → country
+const MID = {
+  '211':'Germany','219':'Denmark','220':'Denmark','224':'Spain','226':'France',
+  '227':'France','228':'France','230':'Finland','232':'UK','233':'UK','234':'UK','235':'UK',
+  '244':'Netherlands','247':'Italy','255':'Portugal','257':'Norway','258':'Norway','259':'Norway',
+  '261':'Poland','265':'Sweden','266':'Sweden','271':'Turkey','272':'Ukraine','273':'Russia',
+  '275':'Latvia','276':'Estonia','277':'Lithuania','303':'USA','308':'Bahamas','312':'Belize',
+  '316':'Canada','338':'USA','339':'Jamaica','345':'Mexico','351':'Panama','352':'Panama',
+  '353':'Panama','366':'USA','367':'USA','368':'USA','369':'USA','412':'China','413':'China',
+  '414':'China','416':'Taiwan','419':'India','422':'Iran','428':'Israel','431':'Japan',
+  '432':'Japan','440':'South Korea','441':'South Korea','445':'North Korea','503':'Australia',
+  '525':'Indonesia','533':'Malaysia','563':'Singapore','564':'Singapore','567':'Thailand',
+  '574':'Vietnam','601':'South Africa','605':'Algeria','622':'Egypt','636':'Liberia',
+  '637':'Liberia','710':'Brazil','720':'Argentina','725':'Chile','735':'Colombia',
+  '740':'Uruguay','770':'Venezuela',
+};
+function mmsiCountry(mmsi) {
+  return MID[String(mmsi || '').slice(0, 3)] || '';
+}
+
+function applyLeaderToTip(country) {
+  const leader = findLeader(country);
+  const agentRow = document.getElementById('tip-agent-row');
+  if (!leader) { agentRow.style.display = 'none'; return; }
+  agentRow.style.display = 'flex';
+  document.getElementById('tip-flag').textContent = FLAG[leader.c] || '';
+  document.getElementById('tip-name').textContent = leader.n;
+  document.getElementById('tip-role').textContent = leader.r;
+  document.getElementById('tip-ctry').textContent = '';
+  const img = document.getElementById('tip-photo');
+  img.style.display = 'block';
+  img.src = photoCache.get(leader.n) || '';
+  if (!photoCache.has(leader.n)) {
+    fetchWikiPhoto(leader.n).then(src => { if (src) img.src = src; else img.style.display = 'none'; });
+  } else if (!photoCache.get(leader.n)) img.style.display = 'none';
+}
+
 // Build WIN agent points [lat, lng] for globe.gl
 const placed = {};
 const agentPoints = RAW.map(p => {
@@ -343,11 +476,14 @@ world.htmlElement(d => {
       const fpKm = Math.round(fpDeg * 111);
       const velKms = Math.sqrt(398600 / (6371 + h));
       const periodMin = Math.round(2 * Math.PI * Math.sqrt(Math.pow(6371 + h, 3) / 398600) / 60);
-      document.getElementById('tip-name').textContent = '🛰 ' + d.name;
-      document.getElementById('tip-role').textContent =
-        `Alt: ${Math.round(h)} km  ·  ${velKms.toFixed(1)} km/s`;
-      document.getElementById('tip-ctry').textContent =
-        `Cobertura: ~${fpKm.toLocaleString()} km radio  ·  Período: ${periodMin} min`;
+      // Mostrar líder del país dueño del satélite
+      applyLeaderToTip(satCountry(d.name));
+      // Info del satélite en fila inferior
+      const satRow = document.getElementById('tip-sat-row');
+      satRow.style.display = 'block';
+      document.getElementById('tip-sat-name').textContent = '🛰 ' + d.name;
+      document.getElementById('tip-sat-info').textContent = `Alt: ${Math.round(h)} km  ·  ${velKms.toFixed(1)} km/s`;
+      document.getElementById('tip-sat-cov').textContent  = `Cobertura: ~${fpKm.toLocaleString()} km  ·  ${periodMin} min`;
       const tipEl = document.getElementById('tip');
       tipEl.style.display = 'block';
       tipEl.style.left = (evt.clientX + 14) + 'px';
@@ -359,14 +495,20 @@ world.htmlElement(d => {
       world.ringsData(jammingRings);
     });
   } else if (d._src === 'aircraft') {
-    el.style.cssText = `pointer-events:none;color:#00eeff;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #00eeff;user-select:none`;
+    el.style.cssText = `pointer-events:auto;cursor:pointer;color:#00eeff;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #00eeff;user-select:none`;
     el.textContent = '▲';
+    el.addEventListener('mouseenter', evt => showTip(d, evt.clientX, evt.clientY));
+    el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   } else if (d._src === 'ship') {
-    el.style.cssText = `pointer-events:none;color:#44aaff;font-size:11px;line-height:1;text-shadow:0 0 6px #44aaff;user-select:none`;
+    el.style.cssText = `pointer-events:auto;cursor:pointer;color:#44aaff;font-size:11px;line-height:1;text-shadow:0 0 6px #44aaff;user-select:none`;
     el.textContent = '⬡';
+    el.addEventListener('mouseenter', evt => showTip(d, evt.clientX, evt.clientY));
+    el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   } else if (d._src === 'mfl') {
-    el.style.cssText = `pointer-events:none;color:#ff4400;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #ff4400;user-select:none`;
+    el.style.cssText = `pointer-events:auto;cursor:pointer;color:#ff4400;font-size:10px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 6px #ff4400;user-select:none`;
     el.textContent = '▲';
+    el.addEventListener('mouseenter', evt => showTip(d, evt.clientX, evt.clientY));
+    el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   }
   return el;
 });
@@ -409,14 +551,11 @@ world.controls().addEventListener('end', () => {
 const ARC_DEFS = [
   {s:'Russia',e:'Ukraine',col:'#ff2222',lbl:'Conflicto Militar'},
   {s:'Iran',e:'Israel',col:'#ff4400',lbl:'Tensión Proxy'},
-  {s:'China',e:'USA',col:'#ff8800',lbl:'Guerra Comercial'},
-  {s:'Saudi Arabia',e:'USA',col:'#ffee00',lbl:'Eje Petrodólar'},
-  {s:'Russia',e:'China',col:'#ff6600',lbl:'Alineamiento'},
   {s:'Burkina Faso',e:'Russia',col:'#ff0099',lbl:'Wagner/Sahel'},
   {s:'Mali',e:'Russia',col:'#ff0099',lbl:'Wagner/Sahel'},
   {s:'North Korea',e:'Russia',col:'#cc00ff',lbl:'Suministro Mil.'},
-  {s:'China',e:'Saudi Arabia',col:'#00aaff',lbl:'Petro-Yuan'},
-  {s:'India',e:'Russia',col:'#00ff88',lbl:'Petróleo Ruso'},
+  {s:'Iran',e:'Ukraine',col:'#ff6600',lbl:'Drones Iraníes'},
+  {s:'China',e:'Taiwan',col:'#ffaa00',lbl:'Tensión Estrecho'},
 ];
 const arcData = ARC_DEFS.map(a => {
   const s = coords(a.s), e = coords(a.e);
@@ -447,28 +586,71 @@ const tip = document.getElementById('tip');
 let lastMouse = { x: 0, y: 0 };
 document.addEventListener('mousemove', e => { lastMouse = { x: e.clientX, y: e.clientY }; });
 
-function showTip(point) {
-  if (!point) { tip.style.display = 'none'; return; }
-  let name, role, ctry;
-  if (point._src === 'agent') {
-    name = point.n; role = point.r; ctry = '📍 ' + point.c;
-  } else if (point._src === 'aircraft') {
-    name = '✈ ' + (point.callsign || point.icao || '—');
-    role = (point.country || '—') + (point.alt ? ' · ' + point.alt + ' m' : '');
-    ctry = point.speed ? Math.round(point.speed * 1.944) + ' kts' : '';
-  } else if (point._src === 'sat') {
-    name = '🛰 ' + point.name; role = 'Alt: ' + point.altKm + ' km'; ctry = 'CelesTrak TLE';
-  } else if (point._src === 'ship') {
-    name = '🚢 ' + (point.name || 'BUQUE'); role = 'MMSI: ' + (point.mmsi || '—'); ctry = '';
-  } else if (point._src === 'mfl') {
-    name = '✈ ' + (point.callsign || '—'); role = (point.model || '—') + ' · ' + (point.country || '—'); ctry = '';
-  }
-  document.getElementById('tip-name').textContent = name || '';
-  document.getElementById('tip-role').textContent = role || '';
-  document.getElementById('tip-ctry').textContent = ctry || '';
-  tip.style.display = 'block';
+function positionTip() {
   tip.style.left = (lastMouse.x + 14) + 'px';
   tip.style.top  = (lastMouse.y - 30) + 'px';
+}
+
+function showTip(point, cx, cy) {
+  if (!point) { tip.style.display = 'none'; return; }
+
+  const agentRow = document.getElementById('tip-agent-row');
+  const satRow   = document.getElementById('tip-sat-row');
+
+  if (point._src === 'agent') {
+    agentRow.style.display = 'flex';
+    satRow.style.display   = 'none';
+    document.getElementById('tip-name').textContent = point.n;
+    document.getElementById('tip-role').textContent = point.r;
+    document.getElementById('tip-ctry').textContent = (FLAG[point.c] || '') + '  ' + point.c;
+    document.getElementById('tip-flag').textContent = FLAG[point.c] || '';
+    // Foto: placeholder primero, luego carga async
+    const img = document.getElementById('tip-photo');
+    img.src = photoCache.get(point.n) || '';
+    img.style.display = 'block';
+    if (!photoCache.has(point.n)) {
+      fetchWikiPhoto(point.n).then(src => {
+        if (src) { img.src = src; }
+        else { img.style.display = 'none'; }
+      });
+    } else if (!photoCache.get(point.n)) {
+      img.style.display = 'none';
+    }
+  } else {
+    satRow.style.display = 'block';
+    let country = '', name = '', info = '', detail = '';
+    if (point._src === 'aircraft') {
+      country = COUNTRY_MAP[point.country] || point.country || '';
+      name    = '✈ ' + (point.callsign || point.icao || '—');
+      info    = (FLAG[country] || '') + '  ' + country;
+      const kts = point.speed ? Math.round(point.speed * 1.944) + ' kts' : '';
+      const ft  = point.altM  ? Math.round(point.altM * 3.281).toLocaleString() + ' ft' : '';
+      detail  = [kts, ft].filter(Boolean).join('  ·  ');
+    } else if (point._src === 'ship') {
+      const sc = mmsiCountry(point.mmsi);
+      country = COUNTRY_MAP[sc] || sc;
+      name   = '🚢 ' + (point.name || 'BUQUE');
+      info   = (FLAG[country] || '') + '  ' + (country || 'MMSI: ' + (point.mmsi || '—'));
+      detail = 'MMSI: ' + (point.mmsi || '—');
+    } else if (point._src === 'mfl') {
+      country = point.country || '';
+      name    = '✈ MIL ' + (point.callsign || '—');
+      info    = (point.model || '—') + '  ' + (FLAG[country] || '') + ' ' + country;
+      detail  = '';
+    }
+    applyLeaderToTip(country);
+    document.getElementById('tip-sat-name').textContent = name;
+    document.getElementById('tip-sat-info').textContent = info;
+    document.getElementById('tip-sat-cov').textContent  = detail;
+  }
+
+  tip.style.display = 'block';
+  if (cx !== undefined) {
+    tip.style.left = (cx + 14) + 'px';
+    tip.style.top  = (cy - 30) + 'px';
+  } else {
+    positionTip();
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -551,11 +733,11 @@ function connectAIS() {
 // ═══════════════════════════════════════════════════
 async function pollOpenSky() {
   try {
-    const res = await fetch(OPENSKY_URL, { signal: AbortSignal.timeout(20000) });
+    const res = await fetch(OPENSKY_URL, { signal: AbortSignal.timeout(45000) });
     if (!res.ok) throw new Error('opensky ' + res.status);
     const data = await res.json();
     aircraftPoints = (data.states || [])
-      .filter(s => s[5] !== null && s[6] !== null && s[7] !== null && s[7] > 1000 && !s[8])
+      .filter(s => s[5] !== null && s[6] !== null && !s[8])
       .slice(0, 5000)
       .map(s => ({
         _src: 'aircraft',
@@ -563,6 +745,7 @@ async function pollOpenSky() {
         callsign: (s[1] || '').trim(),
         country: s[2] || '',
         alt: 0.005,
+        altM: s[7] || 0,
         speed: s[9] || 0,
         heading: s[10] || 0,
         icao: s[0],
