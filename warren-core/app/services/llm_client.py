@@ -24,6 +24,7 @@ async def classify_direction(event_type: str, region: str, payload_summary: str)
     Falls back to 0.5 (neutral) on any error.
     """
     settings = get_settings()
+    import re
     prompt = (
         f"Geopolitical event: '{event_type}' detected in '{region}'. "
         f"Context: {payload_summary[:300]}. "
@@ -36,11 +37,15 @@ async def classify_direction(event_type: str, region: str, payload_summary: str)
         resp = await client.chat.completions.create(
             model=settings.llm_model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=10,
+            max_tokens=1024,
             temperature=0,
         )
-        raw = resp.choices[0].message.content.strip()
-        score = float(raw)
+        full = resp.choices[0].message.content or ""
+        # strip qwen3 <think>...</think> block, take text after it
+        after_think = re.sub(r"<think>.*?</think>", "", full, flags=re.DOTALL).strip()
+        raw = after_think or full
+        match = re.search(r"[01]?\.\d+|[01]", raw)
+        score = float(match.group() if match else raw)
         return max(0.0, min(1.0, score))
     except Exception as e:
         logger.warning("direction_score LLM call failed: %s — defaulting to 0.5", e, exc_info=True)
