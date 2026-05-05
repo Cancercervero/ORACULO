@@ -35,8 +35,9 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgresql+asyncpg://warren:${PG_PASSWORD:-warren_dev}@postgres/warren_core
-      LLM_API_KEY: ${OPENAI_API_KEY}
-      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:8b}
       PROB_DAMPENING: "0.15"
     depends_on:
       redis:
@@ -63,8 +64,9 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       WARREN_CORE_URL: http://warren-core:9000
-      LLM_API_KEY: ${OPENAI_API_KEY}
-      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:8b}
     command: python council_orchestrator.py
     depends_on:
       redis:
@@ -78,6 +80,9 @@ services:
       - "5001:5001"
     environment:
       REDIS_URL: redis://redis:6379
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      LLM_MODEL_NAME: ${LLM_MODEL:-qwen3:8b}
     depends_on:
       redis:
         condition: service_healthy
