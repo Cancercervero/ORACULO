@@ -1,78 +1,633 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WIN System - Mirror World 3D</title>
-  <script src="https://unpkg.com/globe.gl"></script>
+  <title>Sistema WIN — Mirror World</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
   <style>
-    body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
-    #world { width: 100vw; height: 100vh; }
-    #overlay { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-    .status-panel { background: rgba(0, 20, 0, 0.8); border: 1px solid #0f0; padding: 15px; margin-bottom: 10px; width: 300px; }
-    h1 { margin: 0 0 10px 0; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
-    .alert { color: #f00; animation: blink 1s infinite; }
-    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-    .agent-list { font-size: 12px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
+    #globe-wrap { width: 100vw; height: 100vh; }
+
+    #overlay {
+      position: absolute; top: 14px; left: 14px; z-index: 10;
+      pointer-events: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .panel {
+      background: rgba(0,10,0,0.85); border: 1px solid #1a6b1a;
+      padding: 9px 12px; width: 260px; pointer-events: auto;
+    }
+    .panel h1 {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+      border-bottom: 1px solid #1a6b1a; padding-bottom: 4px; margin-bottom: 6px;
+    }
+    .row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
+    .g { color: #00ff41; } .y { color: #ffdd00; }
+    .r { color: #ff4444; } .o { color: #ff8800; } .b { color: #44aaff; }
+    .c { color: #00eeff; } .sw { color: #ccccff; }
+    #feed { font-size: 10px; max-height: 100px; overflow: hidden; }
+    .fi { margin: 2px 0; padding: 1px 0 1px 5px; border-left: 2px solid #1a6b1a; line-height: 1.4; }
+    .fi.a { border-color: #ff4444; color: #ff8888; }
+    .fi.w { border-color: #ff8800; color: #ffcc66; }
+    .fi.b { border-color: #44aaff; color: #88ccff; }
+    #legend { font-size: 10px; }
+    .leg { display: flex; align-items: center; margin: 2px 0; gap: 6px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    #tip {
+      position: absolute; z-index: 20; pointer-events: none;
+      background: rgba(0,14,0,0.95); border: 1px solid #0f0;
+      padding: 8px 12px; font-size: 11px; max-width: 260px;
+      display: none; white-space: nowrap;
+    }
+    #tip .tn { color: #00ff41; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
+    #tip .tr { color: #aaffaa; margin-bottom: 2px; }
+    #tip .tc { color: #ffdd00; }
+
+    #sb-bar {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: rgba(0,8,0,0.85); border-top: 1px solid #1a6b1a;
+      padding: 4px 14px; font-size: 10px; display: flex; gap: 20px;
+      pointer-events: none; flex-wrap: wrap;
+    }
+    .sb-item { display: flex; gap: 5px; }
   </style>
 </head>
 <body>
-  <div id="overlay">
-    <div class="status-panel">
-      <h1>Wayne Intelligence Network</h1>
-      <div class="agent-list">
-        <div>STATUS: <span style="color: #0f0;">ACTIVE</span></div>
-        <div>SCANNING: GLOBAL SECTORS...</div>
-        <div class="alert">!!! ALERT: SAHEL CONVERGENCE !!!</div>
-        <div>ACTIVE AGENTS: 112 DETECTED</div>
-      </div>
-    </div>
-    <div class="status-panel">
-      <h1>Tactical Feed</h1>
-      <div id="feed" style="font-size: 10px;">
-        > Detecting Dark Pool movement in USO...<br>
-        > Macron shifting naval assets to West Africa...<br>
-        > Mojtaba Khamenei speech detected...<br>
-        > Shadowbroker: GPS Jamming in Red Sea...
-      </div>
-    </div>
+<div id="globe-wrap"></div>
+
+<div id="overlay">
+  <div class="panel">
+    <h1>⬡ Wayne Intelligence Network</h1>
+    <div class="row"><span>ESTADO</span><span class="g">ACTIVO</span></div>
+    <div class="row"><span>AGENTES WIN</span><span class="g" id="cnt-agents">103</span></div>
+    <div class="row"><span>SATÉLITES</span><span class="sw" id="cnt-sat">—</span></div>
+    <div class="row"><span>AERONAVES</span><span class="c" id="cnt-ac">—</span></div>
+    <div class="row"><span>BUQUES AIS</span><span class="b" id="cnt-ships">—</span></div>
+    <div class="row"><span>GPS JAMMING</span><span class="r" id="cnt-jam">—</span></div>
+    <div class="row"><span>AIS STREAM</span><span class="y" id="ais-status">SIN CLAVE</span></div>
+    <div class="row"><span>OPENSKY</span><span class="y" id="sky-status">CARGANDO</span></div>
+    <div class="row"><span>CELESTRAK</span><span class="y" id="cel-status">CARGANDO</span></div>
   </div>
-  <div id="world"></div>
+  <div class="panel">
+    <h1>Alimentación Táctica</h1>
+    <div id="feed"><div class="fi">Inicializando...</div></div>
+  </div>
+  <div class="panel" id="legend">
+    <h1>Leyenda</h1>
+    <div class="leg"><div class="dot" style="background:#00ff41"></div>Jefe de Estado / Político</div>
+    <div class="leg"><div class="dot" style="background:#ffdd00"></div>Financiero / Economista</div>
+    <div class="leg"><div class="dot" style="background:#00eeff"></div>Tecnología / Corporativo</div>
+    <div class="leg"><div class="dot" style="background:#ff6600"></div>Militar / Seguridad</div>
+    <div class="leg" style="margin-top:4px;border-top:1px solid #1a6b1a;padding-top:4px;">
+      <div class="dot" style="background:#ccccff;opacity:0.8"></div>Satélite orbital (CelesTrak)
+    </div>
+    <div class="leg"><div class="dot" style="background:#00eeff"></div>Aeronave (OpenSky)</div>
+    <div class="leg"><div class="dot" style="background:#44aaff"></div>Buque AIS (aisstream)</div>
+    <div class="leg"><div class="dot" style="background:#ff4400"></div>Vuelo Militar (ShadowBroker)</div>
+    <div class="leg"><div class="dot" style="background:#ff2222;border-radius:0"></div>GPS Jamming (anillo)</div>
+  </div>
+</div>
 
-  <script>
-    const world = Globe()
-      (document.getElementById('world'))
-      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
-      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-      .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
-      .htmlElementsData([
-        { lat: 12.3, lng: -1.5, name: 'Traoré (Sahel)', color: 'red' },
-        { lat: 48.8, lng: 2.3, name: 'Macron (France)', color: 'blue' },
-        { lat: 35.7, lng: 51.4, name: 'Mojtaba Khamenei (Iran)', color: 'green' },
-        { lat: 38.9, lng: -77.0, name: 'Trump (USA)', color: 'white' }
-      ])
-      .htmlElement(d => {
-        const el = document.createElement('div');
-        el.innerHTML = `
-          <div style="color: ${d.color}; font-size: 10px; font-family: monospace; background: rgba(0,0,0,0.5); padding: 2px; border: 1px solid ${d.color};">
-            [${d.name}]
-          </div>
-        `;
-        return el;
+<div id="tip">
+  <div class="tn" id="tip-name"></div>
+  <div class="tr" id="tip-role"></div>
+  <div class="tc" id="tip-ctry"></div>
+</div>
+
+<div id="sb-bar">
+  <div class="sb-item"><span class="sw">•</span><span id="bar-sat">— satélites</span></div>
+  <div class="sb-item"><span class="c">•</span><span id="bar-ac">— aeronaves</span></div>
+  <div class="sb-item"><span class="b">•</span><span id="bar-ships">— buques</span></div>
+  <div class="sb-item"><span class="r">◎</span><span id="bar-jam">— GPS jamming</span></div>
+  <div class="sb-item"><span class="o">•</span><span id="bar-uav">— UAVs</span></div>
+  <div class="sb-item" style="margin-left:auto;color:#444;">WIN · OpenSky · aisstream · CelesTrak · ShadowBroker</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+const AISSTREAM_KEY = '65616234dee963888f8b0a0434348c8061101edd';
+const SB_URL        = 'http://localhost:8000/api/live-data/fast';
+const OPENSKY_URL   = '/api/aircraft';
+const CELESTRAK_TLE = 'https://celestrak.org/NORAD/elements/visual.txt';
+// ═══════════════════════════════════════════════════
+
+const C = {
+  Egypt:[30.06,31.25],Algeria:[36.74,3.06],Niger:[13.51,2.12],
+  Finland:[60.16,24.93],Iran:[35.69,51.42],UK:[51.50,-0.12],
+  Jamaica:[17.99,-76.79],Australia:[-33.87,151.21],Portugal:[38.72,-9.14],
+  Thailand:[13.75,100.52],Malaysia:[3.14,101.69],Mali:[12.65,-8.00],
+  Syria:[33.51,36.29],Israel:[31.77,35.22],Guatemala:[14.64,-90.51],
+  Nigeria:[6.45,3.40],Philippines:[14.60,121.00],Suriname:[5.83,-55.17],
+  'European Union':[50.85,4.35],Mexico:[19.43,-99.13],'South Africa':[-25.75,28.23],
+  Ecuador:[-0.23,-78.52],Nicaragua:[12.14,-86.29],Netherlands:[52.37,4.90],
+  Peru:[-12.05,-77.05],USA:[38.89,-77.04],Poland:[52.23,21.01],
+  France:[48.86,2.35],Germany:[52.52,13.40],Chile:[-33.46,-70.65],
+  Colombia:[4.71,-74.07],'Burkina Faso':[12.37,-1.53],Guyana:[6.80,-58.16],
+  China:[39.91,116.39],Canada:[45.42,-75.69],Italy:[41.90,12.48],
+  Argentina:[-34.61,-58.38],Belize:[17.25,-88.77],Panama:[8.99,-79.52],
+  Kazakhstan:[51.18,71.45],Japan:[35.69,139.69],'South Korea':[37.57,126.98],
+  'North Korea':[39.02,125.75],Jordan:[31.95,35.93],Singapore:[1.35,103.82],
+  'Dominican Republic':[18.48,-69.90],Bolivia:[-16.50,-68.15],Brazil:[-15.78,-47.93],
+  Cuba:[23.14,-82.36],'Saudi Arabia':[24.69,46.72],UAE:[24.47,54.37],
+  Bangladesh:[23.72,90.41],India:[28.63,77.22],'El Salvador':[13.69,-89.19],
+  Venezuela:[10.49,-66.88],Indonesia:[-6.21,106.85],Turkey:[39.92,32.86],
+  Uzbekistan:[41.30,69.24],Pakistan:[33.72,73.06],Qatar:[25.29,51.53],
+  Vietnam:[21.03,105.85],Russia:[55.75,37.62],Ukraine:[50.45,30.52],
+  Kenya:[-1.29,36.82],Uruguay:[-34.90,-56.19],Honduras:[14.10,-87.21],
+  Hungary:[47.50,19.04],Spain:[40.42,-3.70],'Costa Rica':[9.93,-84.09],
+  Paraguay:[-25.28,-57.63],Lebanon:[33.87,35.50],
+};
+function coords(country) {
+  if (!country || country === '?') return null;
+  if (C[country]) return C[country];
+  const lc = country.toLowerCase();
+  for (const k of Object.keys(C)) {
+    if (lc.startsWith(k.toLowerCase()) || k.toLowerCase().startsWith(lc)) return C[k];
+  }
+  return null;
+}
+
+const RAW = [
+  {n:'Abdel Fattah el-Sisi',c:'Egypt',r:'Presidente de Egipto',t:'political'},
+  {n:'Abdelmadjid Tebboune',c:'Algeria',r:'Presidente de Argelia',t:'political'},
+  {n:'Abdourahamane Tchiani',c:'Niger',r:'Presidente de Níger',t:'military'},
+  {n:'Alexander Stubb',c:'Finland',r:'Presidente de Finlandia',t:'political'},
+  {n:'Ali Khamenei',c:'Iran',r:'Líder Supremo de Irán',t:'political'},
+  {n:'Andrew Bailey',c:'UK',r:'Gobernador BoE',t:'financial'},
+  {n:'Andrew Holness',c:'Jamaica',r:'PM de Jamaica',t:'political'},
+  {n:'Anthony Albanese',c:'Australia',r:'PM de Australia',t:'political'},
+  {n:'Antonio Jose Seguro',c:'Portugal',r:'PM de Portugal',t:'political'},
+  {n:'Anutin Charnvirakul',c:'Thailand',r:'PM de Tailandia',t:'political'},
+  {n:'Anwar Ibrahim',c:'Malaysia',r:'PM de Malasia',t:'political'},
+  {n:'Assimi Goita',c:'Mali',r:'Presidente de Mali',t:'military'},
+  {n:'Bashar al-Assad',c:'Syria',r:'Presidente de Siria',t:'political'},
+  {n:'Benjamin Netanyahu',c:'Israel',r:'PM de Israel',t:'political'},
+  {n:'Bernardo Arevalo',c:'Guatemala',r:'Presidente de Guatemala',t:'political'},
+  {n:'Bola Tinubu',c:'Nigeria',r:'Presidente de Nigeria',t:'political'},
+  {n:'Bongbong Marcos',c:'Philippines',r:'Presidente de Filipinas',t:'political'},
+  {n:'Chan Santokhi',c:'Suriname',r:'Presidente de Surinam',t:'political'},
+  {n:'Christine Lagarde',c:'European Union',r:'Presidenta BCE',t:'financial'},
+  {n:'Claudia Sheinbaum',c:'Mexico',r:'Presidenta de México',t:'political'},
+  {n:'Cyril Ramaphosa',c:'South Africa',r:'Presidente de Sudáfrica',t:'political'},
+  {n:'Ray Dalio',c:'USA',r:'Analista Macroeconómico',t:'financial'},
+  {n:'Daniel Noboa',c:'Ecuador',r:'Presidente de Ecuador',t:'political'},
+  {n:'Daniel Ortega',c:'Nicaragua',r:'Presidente de Nicaragua',t:'political'},
+  {n:'Daron Acemoglu',c:'USA',r:'Economista Institucional',t:'financial'},
+  {n:'Delcy Rodriguez',c:'Venezuela',r:'VP de Venezuela',t:'political'},
+  {n:'Dick Schoof',c:'Netherlands',r:'PM de Países Bajos',t:'political'},
+  {n:'Dina Boluarte',c:'Peru',r:'Presidenta de Perú',t:'political'},
+  {n:'Donald Trump',c:'USA',r:'Presidente de EE.UU.',t:'political'},
+  {n:'Donald Tusk',c:'Poland',r:'PM de Polonia',t:'political'},
+  {n:'Elon Musk',c:'USA',r:'Tech / DOGE / xAI',t:'tech'},
+  {n:'Emmanuel Macron',c:'France',r:'Presidente de Francia',t:'political'},
+  {n:'Eric Lascelles',c:'Canada',r:'Chief Economist RBC',t:'financial'},
+  {n:'Larry Fink',c:'USA',r:'CEO BlackRock',t:'financial'},
+  {n:'Friedrich Merz',c:'Germany',r:'Canciller de Alemania',t:'political'},
+  {n:'Gabriel Boric',c:'Chile',r:'Presidente de Chile',t:'political'},
+  {n:'George Soros',c:'USA',r:'Gestor de Fondos',t:'financial'},
+  {n:'Giorgia Meloni',c:'Italy',r:'PM de Italia',t:'political'},
+  {n:'Gustavo Petro',c:'Colombia',r:'Presidente de Colombia',t:'political'},
+  {n:'Ibrahim Traore',c:'Burkina Faso',r:'Presidente de Burkina Faso',t:'military'},
+  {n:'Irfaan Ali',c:'Guyana',r:'Presidente de Guyana',t:'political'},
+  {n:'Jack Ma',c:'China',r:'Fundador Alibaba',t:'tech'},
+  {n:'Jamie Dimon',c:'USA',r:'CEO JPMorgan',t:'financial'},
+  {n:'Jason Furman',c:'USA',r:'Estratega Económico',t:'financial'},
+  {n:'Javier Milei',c:'Argentina',r:'Presidente de Argentina',t:'political'},
+  {n:'JD Vance',c:'USA',r:'Vicepresidente EE.UU.',t:'political'},
+  {n:'Jensen Huang',c:'USA',r:'CEO NVIDIA',t:'tech'},
+  {n:'Jerome Powell',c:'USA',r:'Chair de la Fed',t:'financial'},
+  {n:'Johnny Briceno',c:'Belize',r:'PM de Belice',t:'political'},
+  {n:'Jose Raul Mulino',c:'Panama',r:'Presidente de Panamá',t:'political'},
+  {n:'Justin Trudeau',c:'Canada',r:'PM de Canadá',t:'political'},
+  {n:'Kassym-Jomart Tokayev',c:'Kazakhstan',r:'Presidente de Kazajistán',t:'political'},
+  {n:'Kazuo Ueda',c:'Japan',r:'Gobernador BoJ',t:'financial'},
+  {n:'Keir Starmer',c:'UK',r:'PM del Reino Unido',t:'political'},
+  {n:'Kim Jong-un',c:'North Korea',r:'Líder Supremo RPDC',t:'political'},
+  {n:'King Abdullah II',c:'Jordan',r:'Rey de Jordania',t:'political'},
+  {n:'Kristalina Georgieva',c:'European Union',r:'Dir. Gral. FMI',t:'financial'},
+  {n:'Lawrence Wong',c:'Singapore',r:'PM de Singapur',t:'political'},
+  {n:'Lee Jae-myung',c:'South Korea',r:'Presidente de Corea del Sur',t:'political'},
+  {n:'Luis Abinader',c:'Dominican Republic',r:'Presidente de Rep. Dom.',t:'political'},
+  {n:'Luis Arce',c:'Bolivia',r:'Presidente de Bolivia',t:'political'},
+  {n:'Lula da Silva',c:'Brazil',r:'Presidente de Brasil',t:'political'},
+  {n:'Marco Rubio',c:'USA',r:'Secretario de Estado',t:'political'},
+  {n:'Mark Zuckerberg',c:'USA',r:'CEO Meta',t:'tech'},
+  {n:'Michael Burry',c:'USA',r:'Fundador Scion',t:'financial'},
+  {n:'Miguel Diaz-Canel',c:'Cuba',r:'Presidente de Cuba',t:'political'},
+  {n:'Mohammed bin Salman',c:'Saudi Arabia',r:'Príncipe Heredero KSA',t:'political'},
+  {n:'Mohammed bin Zayed',c:'UAE',r:'Presidente de EAU',t:'political'},
+  {n:'Mojtaba Khamenei',c:'Iran',r:'Líder Supremo Irán',t:'political'},
+  {n:'Muhammad Yunus',c:'Bangladesh',r:'Asesor Principal',t:'political'},
+  {n:'Narendra Modi',c:'India',r:'PM de India',t:'political'},
+  {n:'Nassim Taleb',c:'Lebanon',r:'Filósofo / Autor',t:'financial'},
+  {n:'Nayib Bukele',c:'El Salvador',r:'Presidente de El Salvador',t:'political'},
+  {n:'Niall Ferguson',c:'UK',r:'Historiador',t:'financial'},
+  {n:'Nicolas Maduro',c:'Venezuela',r:'Presidente de Venezuela',t:'political'},
+  {n:'Nouriel Roubini',c:'USA',r:'Economista',t:'financial'},
+  {n:'Olaf Scholz',c:'Germany',r:'Canciller de Alemania',t:'political'},
+  {n:'Pan Gongsheng',c:'China',r:'Gobernador PBOC',t:'financial'},
+  {n:'Pedro Sanchez',c:'Spain',r:'PM de España',t:'political'},
+  {n:'Peter Magyar',c:'Hungary',r:'Oposición Hungría',t:'political'},
+  {n:'Peter Zeihan',c:'USA',r:'Estratega Geopolítico',t:'financial'},
+  {n:'Prabowo Subianto',c:'Indonesia',r:'Presidente de Indonesia',t:'political'},
+  {n:'Vladimir Putin',c:'Russia',r:'Presidente de Rusia',t:'political'},
+  {n:'Recep Tayyip Erdogan',c:'Turkey',r:'Presidente de Turquía',t:'political'},
+  {n:'Robert F. Kennedy Jr.',c:'USA',r:'Secretario HHS',t:'political'},
+  {n:'Rodrigo Chaves',c:'Costa Rica',r:'Presidente de Costa Rica',t:'political'},
+  {n:'Sam Altman',c:'USA',r:'CEO OpenAI',t:'tech'},
+  {n:'Sanae Takaichi',c:'Japan',r:'PM de Japón',t:'political'},
+  {n:'Santiago Pena',c:'Paraguay',r:'Presidente de Paraguay',t:'political'},
+  {n:'Satya Nadella',c:'USA',r:'CEO Microsoft',t:'tech'},
+  {n:'Shavkat Mirziyoyev',c:'Uzbekistan',r:'Presidente de Uzbekistán',t:'political'},
+  {n:'Shehbaz Sharif',c:'Pakistan',r:'PM de Pakistán',t:'political'},
+  {n:'Tamim bin Hamad Al Thani',c:'Qatar',r:'Emir de Qatar',t:'political'},
+  {n:'Tim Cook',c:'USA',r:'CEO Apple',t:'tech'},
+  {n:'To Lam',c:'Vietnam',r:'Presidente de Vietnam',t:'political'},
+  {n:'Viktor Orban',c:'Hungary',r:'PM de Hungría',t:'political'},
+  {n:'Vivek Ramaswamy',c:'USA',r:'DOGE Co-Lead',t:'political'},
+  {n:'Volodymyr Zelenskyy',c:'Ukraine',r:'Presidente de Ucrania',t:'political'},
+  {n:'Warren Buffett',c:'USA',r:'CEO Berkshire Hathaway',t:'financial'},
+  {n:'William Ruto',c:'Kenya',r:'Presidente de Kenya',t:'political'},
+  {n:'Xi Jinping',c:'China',r:'Presidente de China',t:'political'},
+  {n:'Xiomara Castro',c:'Honduras',r:'Presidenta de Honduras',t:'political'},
+  {n:'Yamandu Orsi',c:'Uruguay',r:'Presidente de Uruguay',t:'political'},
+];
+
+const TC = { political:'#00ff41', financial:'#ffdd00', tech:'#00eeff', military:'#ff6600' };
+
+// Build WIN agent points [lat, lng] for globe.gl
+const placed = {};
+const agentPoints = RAW.map(p => {
+  const pt = coords(p.c);
+  if (!pt) return null;
+  placed[p.c] = (placed[p.c] || 0) + 1;
+  const i = placed[p.c];
+  const a = i * 2.4, r = Math.sqrt(i) * 0.8;
+  return {
+    _src: 'agent', n: p.n, r: p.r, c: p.c, t: p.t,
+    lat: pt[0] + r * Math.sin(a),
+    lng: pt[1] + r * Math.cos(a),
+    color: TC[p.t] || '#0f0',
+    radius: 0.35,
+    alt: 0.004,
+  };
+}).filter(Boolean);
+
+// ═══════════════════════════════════════════════════
+// GLOBE.GL INIT
+// ═══════════════════════════════════════════════════
+const world = Globe()(document.getElementById('globe-wrap'))
+  .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+  .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+  .backgroundColor('#000008')
+  .showAtmosphere(true)
+  .atmosphereColor('#1a4080')
+  .atmosphereAltitude(0.20)
+  .pointsData([])
+  .pointLat(d => d.lat)
+  .pointLng(d => d.lng)
+  .pointColor(d => d.color)
+  .pointRadius(d => d.radius)
+  .pointAltitude(d => d.alt || 0)
+  .pointResolution(6)
+  .arcsData([])
+  .arcStartLat(d => d.slat).arcStartLng(d => d.slng)
+  .arcEndLat(d => d.elat).arcEndLng(d => d.elng)
+  .arcColor(d => [d.col, d.col])
+  .arcDashLength(0.4).arcDashGap(0.15)
+  .arcDashAnimateTime(3000)
+  .arcStroke(0.4).arcAltitude(0.18)
+  .ringsData([])
+  .ringLat(d => d.lat).ringLng(d => d.lng)
+  .ringColor(() => '#ff2222')
+  .ringMaxRadius(4).ringPropagationSpeed(2).ringRepeatPeriod(1200)
+  .htmlElementsData([])
+  .htmlElementLat(d => d.lat)
+  .htmlElementLng(d => d.lng)
+  .htmlElementAltitude(0.005)
+  .htmlElement(d => {
+    const el = document.createElement('div');
+    if (d._src === 'aircraft') {
+      el.style.cssText = `pointer-events:none;color:#00eeff;font-size:9px;line-height:1;transform:rotate(${d.heading||0}deg);text-shadow:0 0 4px #00eeffaa;user-select:none`;
+      el.textContent = '▲';
+    } else if (d._src === 'ship') {
+      el.style.cssText = `pointer-events:none;color:#44aaff;font-size:10px;line-height:1;transform:rotate(${(d.heading||0)}deg);text-shadow:0 0 4px #44aaffaa;user-select:none`;
+      el.textContent = '⬡';
+    }
+    return el;
+  })
+  .onPointHover(showTip);
+
+// Set initial camera
+world.pointOfView({ lat: 30, lng: 15, altitude: 2.2 });
+
+// Auto-rotate
+world.controls().autoRotate = true;
+world.controls().autoRotateSpeed = 0.25;
+let rotTimer;
+world.controls().addEventListener('start', () => {
+  world.controls().autoRotate = false;
+  clearTimeout(rotTimer);
+});
+world.controls().addEventListener('end', () => {
+  rotTimer = setTimeout(() => { world.controls().autoRotate = true; }, 6000);
+});
+
+// Geopolitical arcs
+const ARC_DEFS = [
+  {s:'Russia',e:'Ukraine',col:'#ff2222',lbl:'Conflicto Militar'},
+  {s:'Iran',e:'Israel',col:'#ff4400',lbl:'Tensión Proxy'},
+  {s:'China',e:'USA',col:'#ff8800',lbl:'Guerra Comercial'},
+  {s:'Saudi Arabia',e:'USA',col:'#ffee00',lbl:'Eje Petrodólar'},
+  {s:'Russia',e:'China',col:'#ff6600',lbl:'Alineamiento'},
+  {s:'Burkina Faso',e:'Russia',col:'#ff0099',lbl:'Wagner/Sahel'},
+  {s:'Mali',e:'Russia',col:'#ff0099',lbl:'Wagner/Sahel'},
+  {s:'North Korea',e:'Russia',col:'#cc00ff',lbl:'Suministro Mil.'},
+  {s:'China',e:'Saudi Arabia',col:'#00aaff',lbl:'Petro-Yuan'},
+  {s:'India',e:'Russia',col:'#00ff88',lbl:'Petróleo Ruso'},
+];
+const arcData = ARC_DEFS.map(a => {
+  const s = coords(a.s), e = coords(a.e);
+  if (!s || !e) return null;
+  return { slat: s[0], slng: s[1], elat: e[0], elng: e[1], col: a.col };
+}).filter(Boolean);
+world.arcsData(arcData);
+
+// ═══════════════════════════════════════════════════
+// DATA STORES
+// ═══════════════════════════════════════════════════
+let aircraftPoints = [];
+let satPoints = [];
+let shipPoints = [];
+let jammingRings = [];
+
+function updateGlobe() {
+  // Agents + satellites as efficient 3D points
+  world.pointsData([...agentPoints, ...satPoints]);
+  // Aircraft (triangles rotated by heading) + ships as HTML icons — pointer-events:none = no mouse block
+  world.htmlElementsData([...aircraftPoints.slice(0, 2000), ...shipPoints]);
+  world.ringsData(jammingRings);
+}
+
+// ═══════════════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════════════
+const tip = document.getElementById('tip');
+let lastMouse = { x: 0, y: 0 };
+document.addEventListener('mousemove', e => { lastMouse = { x: e.clientX, y: e.clientY }; });
+
+function showTip(point) {
+  if (!point) { tip.style.display = 'none'; return; }
+  let name, role, ctry;
+  if (point._src === 'agent') {
+    name = point.n; role = point.r; ctry = '📍 ' + point.c;
+  } else if (point._src === 'aircraft') {
+    name = '✈ ' + (point.callsign || point.icao || '—');
+    role = (point.country || '—') + (point.alt ? ' · ' + point.alt + ' m' : '');
+    ctry = point.speed ? Math.round(point.speed * 1.944) + ' kts' : '';
+  } else if (point._src === 'sat') {
+    name = '🛰 ' + point.name; role = 'Alt: ' + point.altKm + ' km'; ctry = 'CelesTrak TLE';
+  } else if (point._src === 'ship') {
+    name = '🚢 ' + (point.name || 'BUQUE'); role = 'MMSI: ' + (point.mmsi || '—'); ctry = '';
+  } else if (point._src === 'mfl') {
+    name = '✈ ' + (point.callsign || '—'); role = (point.model || '—') + ' · ' + (point.country || '—'); ctry = '';
+  }
+  document.getElementById('tip-name').textContent = name || '';
+  document.getElementById('tip-role').textContent = role || '';
+  document.getElementById('tip-ctry').textContent = ctry || '';
+  tip.style.display = 'block';
+  tip.style.left = (lastMouse.x + 14) + 'px';
+  tip.style.top  = (lastMouse.y - 30) + 'px';
+}
+
+// ═══════════════════════════════════════════════════
+// FEED
+// ═══════════════════════════════════════════════════
+const feedEl = document.getElementById('feed');
+let feedIdx = 0;
+const DEMO = [
+  ['GPS Jamming: Mar Báltico — 450 zonas activas', 'a'],
+  ['Portaviones USS Truman: Mar Rojo', 'w'],
+  ['GDELT spike: Irán +3.2σ sobre media', 'a'],
+  ['Wagner: rotación tropas Burkina-Mali', 'w'],
+  ['SIGINT: actividad naval RPDC costa este', 'a'],
+  ['Dark pool movement: ETF defensivos +12%', ''],
+];
+function addFeed(txt, cls = '') {
+  const d = document.createElement('div');
+  d.className = 'fi ' + cls;
+  d.textContent = '> ' + txt;
+  feedEl.insertBefore(d, feedEl.firstChild);
+  while (feedEl.children.length > 8) feedEl.removeChild(feedEl.lastChild);
+}
+
+// ═══════════════════════════════════════════════════
+// AIS STREAM
+// ═══════════════════════════════════════════════════
+const shipMap = new Map();
+let shipsDirty = false;
+
+setInterval(() => {
+  if (!shipsDirty) return;
+  shipPoints = [...shipMap.values()].map(s => ({
+    _src: 'ship', lat: s.lat, lng: s.lng,
+    name: s.name, mmsi: s.mmsi,
+    color: '#44aaff', radius: 0.2, alt: 0.001,
+  }));
+  document.getElementById('cnt-ships').textContent = shipMap.size;
+  document.getElementById('bar-ships').textContent = shipMap.size + ' buques AIS';
+  updateGlobe();
+  shipsDirty = false;
+}, 2000);
+
+function connectAIS() {
+  if (!AISSTREAM_KEY) {
+    document.getElementById('ais-status').textContent = 'SIN CLAVE';
+    return;
+  }
+  const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ APIkey: AISSTREAM_KEY, BoundingBoxes: [[[-90, -180], [90, 180]]] }));
+    document.getElementById('ais-status').textContent = 'ONLINE';
+    document.getElementById('ais-status').className = 'g';
+    addFeed('AIS stream conectado', 'b');
+  };
+  ws.onmessage = evt => {
+    try {
+      const msg = JSON.parse(evt.data);
+      const mt = msg.MessageType;
+      if (mt !== 'PositionReport' && mt !== 'StandardClassBPositionReport') return;
+      const m = msg.MetaData;
+      if (!m.latitude || !m.longitude) return;
+      shipMap.set(String(m.MMSI), {
+        lat: m.latitude, lng: m.longitude,
+        name: (m.ShipName || '').trim() || String(m.MMSI),
+        mmsi: m.MMSI,
       });
+      shipsDirty = true;
+    } catch {}
+  };
+  ws.onclose = () => {
+    document.getElementById('ais-status').textContent = 'RECONECTANDO';
+    document.getElementById('ais-status').className = 'y';
+    setTimeout(connectAIS, 5000);
+  };
+  ws.onerror = () => ws.close();
+}
 
-    // Add some random arcs to represent "Money/Resource Flows"
-    const arcsData = [
-      { startLat: 12.3, startLng: -1.5, endLat: 48.8, endLng: 2.3, color: 'red', label: 'Uranium Conflict' },
-      { startLat: 35.7, startLng: 51.4, endLat: 38.9, endLng: -77.0, color: 'green', label: 'Petro-Shadows' }
-    ];
-    
-    world.arcsData(arcsData)
-      .arcColor('color')
-      .arcDashLength(0.4)
-      .arcDashGap(0.2)
-      .arcDashAnimateTime(1500);
+// ═══════════════════════════════════════════════════
+// OPENSKY (via local proxy)
+// ═══════════════════════════════════════════════════
+async function pollOpenSky() {
+  try {
+    const res = await fetch(OPENSKY_URL, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error('opensky ' + res.status);
+    const data = await res.json();
+    aircraftPoints = (data.states || [])
+      .filter(s => s[5] !== null && s[6] !== null && s[7] !== null && s[7] > 1000 && !s[8])
+      .slice(0, 5000)
+      .map(s => ({
+        _src: 'aircraft',
+        lat: s[6], lng: s[5],
+        callsign: (s[1] || '').trim(),
+        country: s[2] || '',
+        alt: 0.005,
+        speed: s[9] || 0,
+        heading: s[10] || 0,
+        icao: s[0],
+        color: '#00eeff',
+        radius: 0.18,
+      }));
+    document.getElementById('cnt-ac').textContent = aircraftPoints.length;
+    document.getElementById('bar-ac').textContent = aircraftPoints.length + ' aeronaves';
+    document.getElementById('sky-status').textContent = 'ONLINE';
+    document.getElementById('sky-status').className = 'g';
+    addFeed(aircraftPoints.length + ' aeronaves (OpenSky)', 'b');
+    updateGlobe();
+  } catch (e) {
+    document.getElementById('sky-status').textContent = 'OFFLINE';
+    document.getElementById('sky-status').className = 'r';
+    addFeed('OpenSky: ' + e.message, 'w');
+  }
+}
 
-  </script>
+// ═══════════════════════════════════════════════════
+// CELESTRAK SATELLITES
+// ═══════════════════════════════════════════════════
+let satRecords = [];
+
+async function loadSatellites() {
+  try {
+    const res = await fetch(CELESTRAK_TLE, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) throw new Error('celestrak ' + res.status);
+    const text = await res.text();
+    const lines = text.trim().split(/\r?\n/);
+    const sats = [];
+    for (let i = 0; i + 2 < lines.length; i += 3) {
+      const name = lines[i].trim();
+      const l1 = lines[i + 1]?.trim();
+      const l2 = lines[i + 2]?.trim();
+      if (l1?.startsWith('1 ') && l2?.startsWith('2 ')) {
+        try { sats.push({ name, satrec: satellite.twoline2satrec(l1, l2) }); } catch {}
+      }
+    }
+    satRecords = sats;
+    document.getElementById('cel-status').textContent = sats.length + ' TLE';
+    document.getElementById('cel-status').className = 'g';
+    addFeed(sats.length + ' satélites TLE (CelesTrak)', 'b');
+  } catch (e) {
+    document.getElementById('cel-status').textContent = 'OFFLINE';
+    document.getElementById('cel-status').className = 'r';
+    addFeed('CelesTrak: ' + e.message, 'w');
+  }
+}
+
+function updateSatPositions() {
+  if (!satRecords.length) return;
+  const now = new Date();
+  const gmst = satellite.gstime(now);
+  const pts = [];
+  for (const s of satRecords) {
+    try {
+      const pv = satellite.propagate(s.satrec, now);
+      if (!pv.position || typeof pv.position !== 'object') continue;
+      const geo = satellite.eciToGeodetic(pv.position, gmst);
+      const lat = satellite.degreesLat(geo.latitude);
+      const lng = satellite.degreesLong(geo.longitude);
+      const altKm = geo.height;
+      if (!isFinite(lat) || !isFinite(lng)) continue;
+      pts.push({
+        _src: 'sat', name: s.name, altKm: altKm.toFixed(0),
+        lat, lng,
+        color: '#ccccff',
+        radius: 0.22,
+        alt: Math.min(altKm / 6371, 0.5),
+      });
+    } catch {}
+  }
+  satPoints = pts;
+  document.getElementById('cnt-sat').textContent = pts.length;
+  document.getElementById('bar-sat').textContent = pts.length + ' satélites';
+  updateGlobe();
+}
+
+// ═══════════════════════════════════════════════════
+// SHADOWBROKER (jamming rings + UAVs + ships fallback)
+// ═══════════════════════════════════════════════════
+async function pollSB() {
+  try {
+    const r = await fetch(SB_URL, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error('sb ' + r.status);
+    const data = await r.json();
+
+    if (!AISSTREAM_KEY) {
+      const ships = (data.ships || []).filter(s => s.lat && s.lng);
+      shipPoints = ships.map(s => ({
+        _src: 'ship', lat: s.lat, lng: s.lng, name: s.name, mmsi: s.mmsi,
+        color: '#44aaff', radius: 0.2, alt: 0.001,
+      }));
+      document.getElementById('cnt-ships').textContent = ships.length;
+      document.getElementById('bar-ships').textContent = ships.length + ' buques (SB)';
+    }
+
+    const jam = (data.gps_jamming || []).filter(z => z.lat && z.lng);
+    jammingRings = jam.map(z => ({ lat: z.lat, lng: z.lng }));
+    document.getElementById('cnt-jam').textContent = jam.length;
+    document.getElementById('bar-jam').textContent = jam.length + ' GPS jamming';
+    if (jam.length) addFeed('GPS Jamming: ' + jam.length + ' zonas', 'a');
+
+    const uavs = (data.uavs || []).filter(u => u.lat && u.lng);
+    document.getElementById('bar-uav').textContent = uavs.length + ' UAVs';
+
+    const mfl = (data.military_flights || []).filter(f => f.lat && f.lng);
+    if (mfl.length) addFeed(mfl.length + ' vuelos militares (SB)', 'w');
+
+    const events = (data.liveuamap || []).filter(e => e.lat && e.lng);
+    if (events.length) addFeed('LiveUAMap: ' + events.length + ' eventos', 'a');
+
+    updateGlobe();
+  } catch {
+    addFeed(DEMO[feedIdx % DEMO.length][0], DEMO[feedIdx % DEMO.length][1]);
+    feedIdx++;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+agentPoints.forEach(a => { a.alt = 0.004; });
+updateGlobe();
+addFeed('Sistema WIN + MirrorWorld inicializado');
+addFeed(agentPoints.length + ' agentes WIN en globo');
+
+connectAIS();
+pollOpenSky(); setInterval(pollOpenSky, 30000);
+loadSatellites().then(() => { updateSatPositions(); setInterval(updateSatPositions, 10000); });
+pollSB(); setInterval(pollSB, 30000);
+</script>
 </body>
 </html>

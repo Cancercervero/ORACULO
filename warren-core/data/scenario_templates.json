@@ -1,0 +1,26 @@
+{
+  "military_conflict": [
+    "Escalacion militar",
+    "Tension diplomatica",
+    "Stalemate",
+    "De-escalacion"
+  ],
+  "economic_crisis": [
+    "Recesion profunda",
+    "Contraccion",
+    "Estabilidad",
+    "Rebote economico"
+  ],
+  "diplomatic": [
+    "Ruptura total",
+    "Negociacion activa",
+    "Acuerdo parcial",
+    "Status-quo"
+  ],
+  "cyber_incident": [
+    "Ataque masivo",
+    "Espionaje activo",
+    "Probe/reconocimiento",
+    "Ruido de fondo"
+  ]
+}
