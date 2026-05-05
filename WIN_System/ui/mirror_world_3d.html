@@ -37,11 +37,18 @@
     .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
     #tip {
-      position: absolute; z-index: 20; pointer-events: none;
+      position: fixed; z-index: 20; pointer-events: none;
       background: rgba(0,14,0,0.97); border: 1px solid #0f0;
       padding: 10px 12px; font-size: 11px; max-width: 280px;
       display: none;
     }
+    #btn-pause {
+      position: fixed; bottom: 36px; right: 14px; z-index: 15;
+      background: rgba(0,10,0,0.85); border: 1px solid #1a6b1a;
+      color: #0f0; font-family: 'Courier New', monospace; font-size: 11px;
+      padding: 6px 12px; cursor: pointer; letter-spacing: 1px;
+    }
+    #btn-pause:hover { background: rgba(0,30,0,0.95); }
     #tip-agent-row { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
     #tip-photo {
       width: 64px; height: 64px; object-fit: cover;
@@ -66,6 +73,7 @@
 </head>
 <body>
 <div id="globe-wrap"></div>
+<button type="button" id="btn-pause" onclick="toggleRotate()">⏸ PAUSAR</button>
 
 <div id="overlay">
   <div class="panel">
@@ -486,8 +494,7 @@ world.htmlElement(d => {
       document.getElementById('tip-sat-cov').textContent  = `Cobertura: ~${fpKm.toLocaleString()} km  ·  ${periodMin} min`;
       const tipEl = document.getElementById('tip');
       tipEl.style.display = 'block';
-      tipEl.style.left = (evt.clientX + 14) + 'px';
-      tipEl.style.top  = (evt.clientY - 30) + 'px';
+      positionTip(evt.clientX, evt.clientY);
       world.ringsData([...jammingRings, { lat: d.lat, lng: d.lng, _fp: true, fpDeg }]);
     });
     el.addEventListener('mouseleave', () => {
@@ -544,8 +551,18 @@ world.controls().addEventListener('start', () => {
   clearTimeout(rotTimer);
 });
 world.controls().addEventListener('end', () => {
+  if (_userPaused) return;
   rotTimer = setTimeout(() => { world.controls().autoRotate = true; }, 6000);
 });
+
+let _userPaused = false;
+function toggleRotate() {
+  _userPaused = !_userPaused;
+  world.controls().autoRotate = !_userPaused;
+  clearTimeout(rotTimer);
+  const btn = document.getElementById('btn-pause');
+  btn.textContent = _userPaused ? '▶ ROTAR' : '⏸ PAUSAR';
+}
 
 // Geopolitical arcs
 const ARC_DEFS = [
@@ -586,9 +603,13 @@ const tip = document.getElementById('tip');
 let lastMouse = { x: 0, y: 0 };
 document.addEventListener('mousemove', e => { lastMouse = { x: e.clientX, y: e.clientY }; });
 
-function positionTip() {
-  tip.style.left = (lastMouse.x + 14) + 'px';
-  tip.style.top  = (lastMouse.y - 30) + 'px';
+function positionTip(cx, cy) {
+  const x = cx !== undefined ? cx : lastMouse.x;
+  const y = cy !== undefined ? cy : lastMouse.y;
+  const W = window.innerWidth, H = window.innerHeight;
+  const tw = tip.offsetWidth || 280, th = tip.offsetHeight || 120;
+  tip.style.left = Math.min(x + 14, W - tw - 8) + 'px';
+  tip.style.top  = Math.min(Math.max(y - 30, 8), H - th - 8) + 'px';
 }
 
 function showTip(point, cx, cy) {
@@ -648,12 +669,7 @@ function showTip(point, cx, cy) {
   }
 
   tip.style.display = 'block';
-  if (cx !== undefined) {
-    tip.style.left = (cx + 14) + 'px';
-    tip.style.top  = (cy - 30) + 'px';
-  } else {
-    positionTip();
-  }
+  positionTip(cx, cy);
 }
 
 // ═══════════════════════════════════════════════════
