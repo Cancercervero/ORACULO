@@ -75,12 +75,15 @@ async def _run_council_for_scenario(
             resp = await llm.chat.completions.create(
                 model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=150,
+                max_tokens=1024,
                 temperature=0.7,
             )
+            import re as _re
+            raw = resp.choices[0].message.content or ""
+            text = _re.sub(r"<think>.*?</think>", "", raw, flags=_re.DOTALL).strip() or raw.strip()
             persona_responses.append({
                 "persona": name,
-                "response": resp.choices[0].message.content.strip(),
+                "response": text,
             })
         except Exception as e:
             logger.warning("LLM call failed for persona %s: %s", name, e)
@@ -107,8 +110,9 @@ async def listen_and_brief(personas_dir: Optional[Path] = None) -> None:
 
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
     llm_api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY", "")
+    llm_base_url = os.getenv("LLM_BASE_URL")
 
-    llm = AsyncOpenAI(api_key=llm_api_key)
+    llm = AsyncOpenAI(api_key=llm_api_key, base_url=llm_base_url)
 
     while True:
         redis_client = aioredis.from_url(redis_url, decode_responses=True)
